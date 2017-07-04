@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "falconray.u4go.gRPC.uGrpc";
+option java_outer_classname = "uGrpcProto";
+option objc_class_prefix = "UGRPC";
+
+package uGrpc;
+
+// Interface exported by the server.
+service UGrpc {
+  // A simple RPC.
+  //
+  // Obtains the feature at a given position.
+  //
+  // A feature with an empty name is returned if there's no feature at the given
+  // position.
+  rpc GetUResponse(UArgs) returns (UResponse) {}
+
+  // A server-to-client streaming RPC.
+  //
+  // Obtains the Features available within the given Rectangle.  Results are
+  // streamed rather than returned at once (e.g. in a response message with a
+  // repeated field), as the rectangle may cover a large area and contain a
+  // huge number of features.
+  rpc ListUResponses(EmbUArgs) returns (stream UResponse) {}
+
+  // A client-to-server streaming RPC.
+  //
+  // Accepts a stream of Points on a route being traversed, returning a
+  // RouteSummary when traversal is completed.
+  rpc RecordRoute(stream EmbUArgs) returns (EmbUResponse) {}
+
+  // A Bidirectional streaming RPC.
+  //
+  // Accepts a stream of RouteNotes sent while a route is being traversed,
+  // while receiving other RouteNotes (e.g. from other users).
+  rpc RouteChat(stream EmbUArgs) returns (stream EmbUResponse) {}
+}
+
+// Points are represented as latitude-longitude pairs in the E7 representation
+// (degrees multiplied by 10**7 and rounded to the nearest integer).
+// Latitudes should be in the range +/- 90 degrees and longitude should be in
+// the range +/- 180 degrees (inclusive).
+message UArgs {
+  int32 i32 = 1;
+  int64 i64 = 2;
+  uint32 ui32 = 3;
+  uint64 ui64 = 4;
+  sint32 si32 = 5;
+  sint64 si64 = 6;
+
+  double dble = 7;
+  float flt = 8;
+
+  bool bl = 9;
+
+  string str = 10;
+  bytes  bS = 11;
+}
+
+
+// A feature names something at a given point.
+//
+// If a feature could not be named, the name is empty.
+message UResponse {
+  int32 i32 = 1;
+  int64 i64 = 2;
+  uint32 ui32 = 3;
+  uint64 ui64 = 4;
+  sint32 si32 = 5;
+  sint64 si64 = 6;
+
+  double dble = 7;
+  float flt = 8;
+
+  bool bl = 9;
+
+  string str = 10;
+  bytes  bS = 11;
+
+  // The point where the feature is detected.
+  UArgs uArgs = 12;
+}
+
+// A latitude-longitude rectangle, represented as two diagonally opposite
+// points "lo" and "hi".
+message EmbUArgs {
+  // One corner of the rectangle.
+  UArgs lo = 1;
+
+  // The other corner of the rectangle.
+  UArgs hi = 2;
+}
+
+message EmbUResponse {
+  // One corner of the rectangle.
+  UArgs lo = 1;
+
+  // The other corner of the rectangle.
+  UArgs hi = 2;
+}
+
