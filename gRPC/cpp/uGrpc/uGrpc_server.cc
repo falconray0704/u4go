@@ -24,8 +24,10 @@ using uGrpc::EmbUArgs;
 using uGrpc::EmbUResponse;
 using uGrpc::UArgs;
 using uGrpc::UResponse;
+using uGrpc::UGrpc;
 using std::chrono::system_clock;
 
+/*
 std::string GetFeatureName(const Point& point, const std::vector<Feature>& feature_list) 
 {
   for (const Feature& f : feature_list) {
@@ -36,24 +38,39 @@ std::string GetFeatureName(const Point& point, const std::vector<Feature>& featu
   }
   return "";
 }
+*/
 
-class UGrpcImpl final : public uGrpc::Service 
+class UGrpcImpl final : public UGrpc::Service 
 {
  public:
-  explicit UGrpcImpl(const std::string& db) 
+  explicit UGrpcImpl() 
   {
-    routeguide::ParseDb(db, &feature_list_);
+    //routeguide::ParseDb(db, &feature_list_);
   }
-
-  Status GetFeature(ServerContext* context, const Point* point, Feature* feature) override 
+  //Status GetFeature(ServerContext* context, const Point* point, Feature* feature) override 
+  Status GetUResponse(::grpc::ServerContext* context, const ::uGrpc::UArgs* request, ::uGrpc::UResponse* response) override
   {
-    feature->set_name(GetFeatureName(*point, feature_list_));
-    feature->mutable_location()->CopyFrom(*point);
+    //feature->set_name(GetFeatureName(*point, feature_list_));
+    //feature->mutable_location()->CopyFrom(*point);
+
+// int32 i32 = 1;
+    response->set_i32(request->i32() + 1);
+
     return Status::OK;
   }
 
-  Status ListFeatures(ServerContext* context, const uGrpc::Rectangle* rectangle, ServerWriter<Feature>* writer) override 
-  {
+  //Status ListFeatures(ServerContext* context, const uGrpc::Rectangle* rectangle, ServerWriter<Feature>* writer) override 
+Status ListUResponses(::grpc::ServerContext* context, const ::uGrpc::EmbUArgs* request, ::grpc::ServerWriter< ::uGrpc::UResponse>* writer) override
+{
+    uGrpc::UResponse resp;
+
+    for(int i = 0; i < 3; i++)
+    {
+        resp.set_i32(request->lo().i32() + i);
+        writer->Write(resp);
+    }
+
+    /*
     auto lo = rectangle->lo();
     auto hi = rectangle->hi();
     long left = (std::min)(lo.longitude(), hi.longitude());
@@ -68,11 +85,21 @@ class UGrpcImpl final : public uGrpc::Service
         writer->Write(f);
       }
     }
+    */
     return Status::OK;
   }
 
-  Status RecordRoute(ServerContext* context, ServerReader<Point>* reader, RouteSummary* summary) override 
-  {
+  //Status RecordRoute(ServerContext* context, ServerReader<Point>* reader, RouteSummary* summary) override 
+Status RecordRoute(::grpc::ServerContext* context, ::grpc::ServerReader< ::uGrpc::EmbUArgs>* reader, ::uGrpc::EmbUResponse* response) override
+{
+
+    EmbUArgs embUArg;
+    for(int i = 0; i < 3; i++)
+    {
+        std::cout<<"RecordRoute(), i:"<< i << "embUArg.lo.i32" << embUArg.lo().i32() <<std::endl;
+    }
+    ////////////////
+    /*
     Point point;
     int point_count = 0;
     int feature_count = 0;
@@ -97,12 +124,26 @@ class UGrpcImpl final : public uGrpc::Service
     auto secs = std::chrono::duration_cast<std::chrono::seconds>(
         end_time - start_time);
     summary->set_elapsed_time(secs.count());
+    */
 
     return Status::OK;
-  }
+}
 
-  Status RouteChat(ServerContext* context, ServerReaderWriter<RouteNote, RouteNote>* stream) override 
-  {
+//  Status RouteChat(ServerContext* context, ServerReaderWriter<RouteNote, RouteNote>* stream) override 
+Status RouteChat(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::uGrpc::EmbUResponse, ::uGrpc::EmbUArgs>* stream) override
+{
+
+    for(int i = 0; i < 3; i++)
+    {
+        EmbUArgs embUArg;
+        EmbUResponse embUResp;
+
+        stream->Read(&embUArg);
+        embUResp.mutable_lo()->set_i32(embUArg.lo().i32() + 1);
+
+        stream->Write(embUResp);
+    }
+    /*
     std::vector<RouteNote> received_notes;
     RouteNote note;
     while (stream->Read(&note)) {
@@ -114,19 +155,19 @@ class UGrpcImpl final : public uGrpc::Service
       }
       received_notes.push_back(note);
     }
+    */
 
     return Status::OK;
-  }
+}
 
  private:
 
-  std::vector<Feature> feature_list_;
 };
 
-void RunServer(const std::string& db_path) 
+void RunServer()
 {
   std::string server_address("0.0.0.0:50051");
-  UGrpcImpl service(db_path);
+  UGrpcImpl service;
 
   ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
@@ -139,8 +180,8 @@ void RunServer(const std::string& db_path)
 int main(int argc, char** argv) 
 {
   // Expect only arg: --db_path=path/to/route_guide_db.json.
-  std::string db = uGrpc::GetDbFileContent(argc, argv);
-  RunServer(db);
+  //std::string db = uGrpc::GetDbFileContent(argc, argv);
+  RunServer();
 
   return 0;
 }

@@ -1,9 +1,11 @@
 # Binaries for programs and plugins
 tags
+uGrpc_server
 *.exe
 *.dll
 *.so
 *.dylib
+*.o
 
 # Test binary, build with `go test -c`
 *.test
