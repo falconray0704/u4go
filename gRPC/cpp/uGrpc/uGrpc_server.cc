@@ -10,7 +10,6 @@
 #include <grpc++/server_builder.h>
 #include <grpc++/server_context.h>
 #include <grpc++/security/server_credentials.h>
-#include "helper.h"
 #include "uGrpc.grpc.pb.h"
 
 using grpc::Server;
@@ -27,172 +26,124 @@ using uGrpc::UResponse;
 using uGrpc::UGrpc;
 using std::chrono::system_clock;
 
-/*
-std::string GetFeatureName(const Point& point, const std::vector<Feature>& feature_list) 
-{
-  for (const Feature& f : feature_list) {
-    if (f.location().latitude() == point.latitude() &&
-        f.location().longitude() == point.longitude()) {
-      return f.name();
-    }
-  }
-  return "";
-}
-*/
-
 class UGrpcImpl final : public UGrpc::Service 
 {
- public:
-  explicit UGrpcImpl() 
-  {
-    //routeguide::ParseDb(db, &feature_list_);
-  }
-  //Status GetFeature(ServerContext* context, const Point* point, Feature* feature) override 
-  Status GetUResponse(::grpc::ServerContext* context, const ::uGrpc::UArgs* request, ::uGrpc::UResponse* response) override
-  {
-    //feature->set_name(GetFeatureName(*point, feature_list_));
-    //feature->mutable_location()->CopyFrom(*point);
 
-// int32 i32 = 1;
-    response->set_i32(request->i32() + 1);
-
-    return Status::OK;
-  }
-
-  //Status ListFeatures(ServerContext* context, const uGrpc::Rectangle* rectangle, ServerWriter<Feature>* writer) override 
-Status ListUResponses(::grpc::ServerContext* context, const ::uGrpc::EmbUArgs* request, ::grpc::ServerWriter< ::uGrpc::UResponse>* writer) override
-{
-    uGrpc::UResponse resp;
-
-    for(int i = 0; i < 3; i++)
-    {
-        resp.set_i32(request->lo().i32() + i);
-        writer->Write(resp);
-    }
-
-    /*
-    auto lo = rectangle->lo();
-    auto hi = rectangle->hi();
-    long left = (std::min)(lo.longitude(), hi.longitude());
-    long right = (std::max)(lo.longitude(), hi.longitude());
-    long top = (std::max)(lo.latitude(), hi.latitude());
-    long bottom = (std::min)(lo.latitude(), hi.latitude());
-    for (const Feature& f : feature_list_) {
-      if (f.location().longitude() >= left &&
-          f.location().longitude() <= right &&
-          f.location().latitude() >= bottom &&
-          f.location().latitude() <= top) {
-        writer->Write(f);
-      }
-    }
-    */
-    return Status::OK;
-  }
-
-  //Status RecordRoute(ServerContext* context, ServerReader<Point>* reader, RouteSummary* summary) override 
-Status RecordRoute(::grpc::ServerContext* context, ::grpc::ServerReader< ::uGrpc::EmbUArgs>* reader, ::uGrpc::EmbUResponse* response) override
-{
-
-    EmbUArgs embUArg;
-    for(int i = 0; i < 3; i++)
-    {
-        std::cout<<"RecordRoute(), i:"<< i << "embUArg.lo.i32" << embUArg.lo().i32() <<std::endl;
-    }
-    ////////////////
-    /*
-    Point point;
-    int point_count = 0;
-    int feature_count = 0;
-    float distance = 0.0;
-    Point previous;
-
-    system_clock::time_point start_time = system_clock::now();
-    while (reader->Read(&point)) {
-      point_count++;
-      if (!GetFeatureName(point, feature_list_).empty()) {
-        feature_count++;
-      }
-      if (point_count != 1) {
-        distance += GetDistance(previous, point);
-      }
-      previous = point;
-    }
-    system_clock::time_point end_time = system_clock::now();
-    summary->set_point_count(point_count);
-    summary->set_feature_count(feature_count);
-    summary->set_distance(static_cast<long>(distance));
-    auto secs = std::chrono::duration_cast<std::chrono::seconds>(
-        end_time - start_time);
-    summary->set_elapsed_time(secs.count());
-    */
-
-    return Status::OK;
-}
-
-//  Status RouteChat(ServerContext* context, ServerReaderWriter<RouteNote, RouteNote>* stream) override 
-Status RouteChat(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::uGrpc::EmbUResponse, ::uGrpc::EmbUArgs>* stream) override
-{
-
-    for(int i = 0; i < 3; i++)
-    {
-        EmbUArgs embUArg;
-        EmbUResponse embUResp;
-
-        stream->Read(&embUArg);
-        embUResp.mutable_lo()->set_i32(embUArg.lo().i32() + 1);
-
-        stream->Write(embUResp);
-    }
-    /*
-    std::vector<RouteNote> received_notes;
-    RouteNote note;
-    while (stream->Read(&note)) {
-      for (const RouteNote& n : received_notes) {
-        if (n.location().latitude() == note.location().latitude() &&
-            n.location().longitude() == note.location().longitude()) {
-          stream->Write(n);
+    public:
+        explicit UGrpcImpl() 
+        {
         }
-      }
-      received_notes.push_back(note);
-    }
-    */
 
-    return Status::OK;
-}
+        Status GetUResponse(::grpc::ServerContext* context, const ::uGrpc::UArgs* request, ::uGrpc::UResponse* response) override
+        {
+            if(request->bs() != std::string("Client request GetUResponse()"))
+            {
+                std::cout << "--- GetUResponse() server get client arg incorrect,request->bs():" << request->bs() << std::endl;
+                response->set_bs(std::string("Server response GetUResponse() fail"));
+            }
+            else
+            {
+                response->set_bs(std::string("Server response GetUResponse()"));
+            }
+            return Status::OK;
+        }
 
- private:
+        Status ListUResponses(::grpc::ServerContext* context, const ::uGrpc::EmbUArgs* request, ::grpc::ServerWriter< ::uGrpc::UResponse>* writer) override
+        {
+            uGrpc::UResponse resp;
+
+            if (request->lo().bs() == std::string("Client request ListUResponses()"))
+            {
+                resp.set_bs(std::string("Server response ListUResponses()"));
+            }
+            else
+            {
+                resp.set_bs(std::string("Server get args incorrect."));
+            }
+
+            for(int i = 0; i < 3; i++)
+            {
+                resp.set_i32(request->lo().i32() + i);
+                writer->Write(resp);
+            }
+
+            return Status::OK;
+        }
+
+        Status RecordRoute(::grpc::ServerContext* context, ::grpc::ServerReader< ::uGrpc::EmbUArgs>* reader, ::uGrpc::EmbUResponse* response) override
+        {
+            int i = 0;
+            EmbUArgs embUArg;
+            for(i = 0; i < 3 && reader->Read(&embUArg); i++)
+            {
+                if (embUArg.lo().i32() != i || embUArg.lo().bs() != std::string("Client RecordRoute() request"))
+                {
+                    std::cout<<"--- RecordRoute() err --- , i:"<< i << " embUArg.lo().i32():" << embUArg.lo().i32() << "embUArg.lo().bs():" << embUArg.lo().bs() <<std::endl;
+                    break;
+                }
+                std::cout<<"RecordRoute(), i:"<< i << " embUArg.lo().i32():" << embUArg.lo().i32() <<std::endl;
+            }
+
+            if(i == 3)
+            {
+                response->mutable_lo()->set_i32(i);
+                response->mutable_lo()->set_bs(std::string("Server RecordRoute() get success"));
+            }
+            else
+            {
+                response->mutable_lo()->set_bs(std::string("Server RecordRoute() get fail"));
+            }
+            return Status::OK;
+        }
+
+        Status RouteChat(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::uGrpc::EmbUResponse, ::uGrpc::EmbUArgs>* stream) override
+        {
+
+            for(int i = 0; i < 3; i++)
+            {
+                EmbUArgs embUArg;
+                EmbUResponse embUResp;
+
+                stream->Read(&embUArg);
+
+                if(embUArg.lo().i32() != i || embUArg.lo().bs() != std::string("Client RouteChat() request"))
+                {
+                    std::cout << "--- RouteChat() get args incorrect, i32:" << embUArg.lo().i32() << "lo().bs():" << embUArg.lo().i32() << std::endl;
+                    embUResp.mutable_lo()->set_bs(std::string("Server RouteChat() response fail"));
+                }
+                else
+                {
+                    embUResp.mutable_lo()->set_bs(std::string("Server RouteChat() response"));
+                }
+                embUResp.mutable_lo()->set_i32(i);
+
+                stream->Write(embUResp);
+            }
+
+            return Status::OK;
+        }
+
+    private:
 
 };
 
 void RunServer()
 {
-  std::string server_address("0.0.0.0:50051");
-  UGrpcImpl service;
+    std::string server_address("0.0.0.0:50051");
+    UGrpcImpl service;
 
-  ServerBuilder builder;
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  builder.RegisterService(&service);
-  std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
-  server->Wait();
+    ServerBuilder builder;
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    std::cout << "Server listening on " << server_address << std::endl;
+    server->Wait();
 }
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
-  // Expect only arg: --db_path=path/to/route_guide_db.json.
-  //std::string db = uGrpc::GetDbFileContent(argc, argv);
-  RunServer();
+    RunServer();
 
-  return 0;
+    return 0;
 }
-
-
-
-
-
-
-
-
-
-
 
