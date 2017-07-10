@@ -163,6 +163,10 @@ class UGrpcClient
             {
                 std::cout << "RouteChat rpc failed." << std::endl;
             }
+            else
+            {
+                    std::cout << "Client RouteChat() success" << std::endl;
+            }
         }
 
 
