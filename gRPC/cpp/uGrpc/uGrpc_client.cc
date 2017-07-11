@@ -103,6 +103,7 @@ class UGrpcClient
                 if (!writer->Write(embUArg))
                 {
                     // Broken stream.
+                    std::cout << "--- RecordRoute() write incompleted ---" << std::endl;
                     break;
                 }
             }
