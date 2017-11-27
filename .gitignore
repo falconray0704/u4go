@@ -6,6 +6,8 @@ uGrpc_server
 *.so
 *.dylib
 *.o
+*.pb.h
+*.pb.go
 
 # Test binary, build with `go test -c`
 *.test
