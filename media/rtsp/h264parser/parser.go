@@ -2,9 +2,9 @@
 package h264parser
 
 import (
-	"ggg/rtsp2rtmp/muxers/h264parser/av"
-	"ggg/rtsp2rtmp/muxers/h264parser/bits"
-	"ggg/rtsp2rtmp/muxers/h264parser/bits/pio"
+	"github.com/falconray0704/u4go/media/rtsp/h264parser/av"
+	"github.com/falconray0704/u4go/media/rtsp/h264parser/bits"
+	"github.com/falconray0704/u4go/media/rtsp/h264parser/bits/pio"
 	"fmt"
 	"bytes"
 )
