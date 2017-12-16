@@ -26,7 +26,7 @@ func runRtspSourceTestOnce(url string, isExitOutCh chan <- bool)  {
 		fmt.Printf("+++ runRtspSourceTestOnce defer exited , tc:%d fc:%d ++++++++++++++++++\n", tc, fc)
 	}()
 
-	src := rtsp.NewRtspSource(context.Background(), 0, url, 30)
+	src := rtsp.NewRtspSource(context.Background(), "0", url, 30)
 	defer func() {
 		if err := src.Stop(); err != nil {
 			fmt.Printf("+++ runRtspSourceTestOnce defer src.Stop() err:%+v ++++++++++++++++++\n", err)
@@ -89,7 +89,7 @@ func runRtspSourceTestNetworkReconnect(url string, isExitOutCh chan <- bool)  {
 		fmt.Printf("+++ runRtspSourceTestNetworkReconnect() defer exited , tc:%d fc:%d ++++++++++++++++++\n", tc, fc)
 	}()
 
-	src := rtsp.NewRtspSource(context.Background(), 0, url, 30)
+	src := rtsp.NewRtspSource(context.Background(), "0", url, 30)
 
 	okExit := make(chan bool, 10)
 	isFinished := make(chan bool)
@@ -170,7 +170,7 @@ func runRtspSourceTestPlayStopLoop(url string, isExitOutCh chan <- bool)  {
 		fmt.Printf("========================== TC: %d fc:%d \n", tc, fc)
 	}()
 
-	src := rtsp.NewRtspSource(context.Background(), 0, url, 30)
+	src := rtsp.NewRtspSource(context.Background(), "0", url, 30)
 	defer func() {
 		if err := src.Stop(); err != nil {
 			fmt.Printf("+++ runRtspSourceTestOnce defer src.Stop() err:%+v ++++++++++++++++++\n", err)

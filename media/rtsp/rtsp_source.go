@@ -68,10 +68,7 @@ type RtspSource struct {
 	rCtx context.Context
 	rCtxCclFunc context.CancelFunc
 
-	//rCtxClt context.Context
-	//rCtxCltCclFunc context.CancelFunc
-
-	Id uint32
+	Id string
 	rtspUrl string
 	outGoingStream chan []byte 	//out chanel
 	OutputChan chan interface {}
@@ -103,11 +100,8 @@ func (src *RtspSource)handleNALU(nalType byte, payload []byte, ts uint32) {
 		rtpPkg.Payload = payload
 		//fmt.Printf("+++ handleNALU() sps nalType:%x ++++++++++\n", nalType)
 		if spsInfo, err := h264parser.ParseSPS(payload); err != nil {
-			fmt.Printf("+++ id:%d handleNALU() ParseSPS err:%v +++\n", src.Id, err)
+			fmt.Printf("--- Id:%s rtspUrl:%s handleNALU() ParseSPS err:%v +++\n", src.Id, src.rtspUrl, err)
 		} else {
-			//src.SPSVideoW = uint32(spsInfo.Width)
-			//src.SPSVideoH = uint32(spsInfo.Height)
-			//fmt.Printf("+++ spsInfo:%+v +++\n",spsInfo)
 
 			select {
 			case <-src.spsCh:
@@ -131,21 +125,14 @@ func (src *RtspSource)handleNALU(nalType byte, payload []byte, ts uint32) {
 
 		//writeNALU(true, int(ts), payload)
 		rtpPkg.Payload = payload
-		//log.Printf("=== naluCount:%d get I frame flvChk len:%d ===\n", rtspSource.naluCount - 1, len(rtspSource.OutputChan) )
 	} else {
 		if nalType != 1 && nalType != 6 {
-			fmt.Printf("--- id:%d handleNALU() Got non-I frame, unknow nalType:%d +++\n", src.Id, nalType)
+			fmt.Printf("--- Id:%s rtspUrl:%s handleNALU() Got non-I frame, unknow nalType:%d +++\n", src.Id, src.rtspUrl, nalType)
 		}
 		// non-keyframe
 		if src.syncCount > 0 {
 			src.naluCount++
-			//writeNALU(false, int(ts), payload)
 			rtpPkg.Payload = payload
-			/*
-			if rtspSource.syncCount%30 == 0 {
-				log.Printf("=== naluCount:%d get non-I frame flvChk len:%d ===\n", rtspSource.naluCount - 1, len(rtspSource.OutputChan))
-			}
-			*/
 		}
 	}
 
@@ -154,7 +141,7 @@ func (src *RtspSource)handleNALU(nalType byte, payload []byte, ts uint32) {
 		//fmt.Printf("+++ len(rtspSource.OutputChan): %d +++\n", chLen)
 		if chLen >= RtspDropTriger && rtpPkg.NalType == 1 {
 			if src.dfc % 2 == 0 {
-				fmt.Printf("+++ Id:%d handleNALU() drop P frame, chlen:%d \n", src.Id, chLen)
+				fmt.Printf("+++ Id:%s rtspUrl:%s handleNALU() drop P frame, chlen:%d \n", src.Id, src.rtspUrl, chLen)
 			} else {
 				select {
 				case <-src.rCtx.Done():
@@ -173,7 +160,7 @@ func (src *RtspSource)handleNALU(nalType byte, payload []byte, ts uint32) {
 			}
 		}
 	} else {
-		fmt.Printf("+++ id:%d handleNALU() rtsp Output chan is blocked, len(rtspSource.OutputChan): %d +++\n", src.Id, chLen)
+		fmt.Printf("+++ Id:%s rtspUrl:%s handleNALU() rtsp Output chan is blocked, len(rtspSource.OutputChan): %d \n", src.Id, src.rtspUrl, chLen)
 	}
 }
 
@@ -181,12 +168,12 @@ func (src *RtspSource)runProcessPkg(isLaunched chan error){
 
 	defer func() {
 		if p := recover(); p != nil {
-			fmt.Printf("+++ rtsp source runProcessPkg() recover! p:%+v\n", p)
+			fmt.Printf("+++ Id:%s rtspUrl:%s runProcessPkg() recover! p:%+v\n", src.Id, src.rtspUrl, p)
 			debug.PrintStack()
 		}
 
 		close(src.outPkgExit)
-		fmt.Printf("+++ Id:%d runProcessPkg() defer exited.\n", src.Id)
+		fmt.Printf("+++ Id:%s rtspUrl:%s runProcessPkg() defer exited.\n", src.Id, src.rtspUrl)
 	}()
 
 	close(isLaunched)
@@ -205,7 +192,7 @@ func (src *RtspSource)runProcessPkg(isLaunched chan error){
 				//packet number
 				packno := (int64(data[6]) << 8) + int64(data[7])
 				if false {
-					fmt.Printf("+++ Id:%d packet num:%d +++\n", src.Id, packno)
+					fmt.Printf("+++ Id:%s rtspUrl:%s packet num:%d +++\n", src.Id, src.rtspUrl, packno)
 				}
 
 				nalType := data[4+rtphdr] & 0x1F
@@ -250,7 +237,7 @@ func (src *RtspSource)runPlayRtspStream(signalLaunched chan error)  {
 
 	defer func() {
 		close(src.cltExit)
-		fmt.Printf("+++ Id:%d runPlayRtspStream() defer exited.\n", src.Id)
+		fmt.Printf("+++ Id:%s rtspUrl:%s runPlayRtspStream() defer exited.\n", src.Id, src.rtspUrl)
 	}()
 
 	var isFirstLaunch bool = true
@@ -264,7 +251,7 @@ func (src *RtspSource)runPlayRtspStream(signalLaunched chan error)  {
 				return
 			}
 
-			fmt.Printf("--- Id:%d buildUpStream() err:%s \n", src.Id, err.Error())
+			fmt.Printf("--- Id:%s rtspUrl:%s buildUpStream() err:%s \n", src.Id, src.rtspUrl, err.Error())
 			select {
 			case <-src.rCtx.Done():
 				return
@@ -284,19 +271,20 @@ func (src *RtspSource)runPlayRtspStream(signalLaunched chan error)  {
 		}
 		go src.RtspReader.pullStream(src.rCtx, cltExit, sLaunched)
 
-		fmt.Printf("+++ Id:%d pullStream() running.................. \n", src.Id)
+		//fmt.Printf("+++ Id:%s rtspUrl:%s pullStream() running.................. \n", src.Id, src.rtspUrl)
 
 		var isClosed error
 		select {
 		case <-src.rCtx.Done():
 			<-cltExit
+			fmt.Printf("+++ Id:%s rtspUrl:%s pullStream() return for context closed.\n", src.Id, src.rtspUrl )
 			return
 		case isClosed = <-cltExit:
 			if _, ok := isClosed.(ContextClosed); ok {
-				fmt.Printf("--- Id:%d pullStream() return err:%s \n", src.Id, isClosed.Error())
+				fmt.Printf("+++ Id:%s rtspUrl:%s pullStream() return err:%s \n", src.Id, src.rtspUrl, isClosed.Error())
 				return
 			} else {
-				fmt.Printf("--- Id:%d pullStream() err:%s \n", src.Id, isClosed.Error())
+				fmt.Printf("--- Id:%s rtspUrl:%s pullStream() err:%s \n", src.Id, src.rtspUrl, isClosed.Error())
 				continue
 			}
 		}
@@ -316,7 +304,7 @@ func (src *RtspSource)Stop() (error){
 	return src.fsmRunner.Event(Event_Stop)
 }
 
-func NewRtspSource(parent context.Context, Id uint32, rtspUrl string, outChLen uint32) (*RtspSource) {
+func NewRtspSource(parent context.Context, Id string, rtspUrl string, outChLen uint32) (*RtspSource) {
 
 	src := new(RtspSource)
 	src.rCtxParent, src.rCtxParentCclFunc = context.WithCancel(parent)
@@ -644,7 +632,7 @@ func (clt *RtspClient) pullStream(ctx context.Context, signalExit chan<- error, 
 
 		clt.socket.Close()
 		signalExit<-err
-		fmt.Printf("+++ pullStream() defer exited.\n")
+		//fmt.Printf("+++ pullStream() defer exited.\n")
 	}()
 
 	header := make([]byte, 4)
