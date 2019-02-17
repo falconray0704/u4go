@@ -1,0 +1,30 @@
+FROM ubuntu:16.04
+
+ARG user
+ARG uid
+ARG group
+ARG gid
+
+COPY ./outBin /myApp/
+COPY ./run.sh /myApp/
+
+RUN groupadd -r "$group" -g "$gid" && useradd -r -u "$uid" -g "$gid" "$user"
+
+RUN mkdir -p /myApp/tmp
+RUN chown -R $user:$group /myApp
+
+ENV DEMO_VERSION 7.2.0
+ENV VERSION=1.0 DEBUG=on \
+    NAME="Hello world"
+
+VOLUME /myApp/tmp
+
+EXPOSE 443 80
+
+USER $user
+
+WORKDIR /myApp
+ENTRYPOINT ["/myApp/outBin"]
+CMD ["-loop=true", "-word=opt", "$HOME", "$PWD", "a1", "a2", "looping"]
+
+

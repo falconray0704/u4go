@@ -2,19 +2,24 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
-const (
-	fileLogs = "/mnt/ld0/gows/src/github.com/falconray0704/u4go/app/tmp/logs"
-	fileOutConsole = "/mnt/ld0/gows/src/github.com/falconray0704/u4go/app/tmp/outConsole.logs"
-	fileErrConsole = "/mnt/ld0/gows/src/github.com/falconray0704/u4go/app/tmp/errConsole.logs"
-	fileOutJson = "/mnt/ld0/gows/src/github.com/falconray0704/u4go/app/tmp/outJson.logs"
-	fileErrJson = "/mnt/ld0/gows/src/github.com/falconray0704/u4go/app/tmp/errJson.logs"
+var (
+	workingDir string
+	fileLogs = "/tmp/logs"
+	fileOutConsole = "/tmp/outConsole.logs"
+	fileErrConsole = "/tmp/errConsole.logs"
+	fileOutJson = "/tmp/outJson.logs"
+	fileErrJson = "/tmp/errJson.logs"
 )
 
 func demoPresets() {
@@ -83,7 +88,16 @@ func demoBasicConfiguratoins() {
 	logger.Info("logger construction succeeded")
 }
 
-func demoAdvancedConfigurations() {
+func NewConfigLogger() (logger *zap.Logger, closer []func(), err error) {
+
+	defer func() {
+		if p := recover(); p !=  nil {
+			for _, cf := range closer {
+				cf()
+			}
+			err, _ = p.(error)
+		}
+	}()
 	// The bundled Config struct only supports the most common configuration
 	// options. More complex needs, like splitting logs between multiple files
 	// or writing to non-file outputs, require use of the zapcore package.
@@ -120,16 +134,13 @@ func demoAdvancedConfigurations() {
 	if fileOutConsoleErr != nil {
 		panic(fileOutConsoleErr)
 	}
-	defer func() {
-		fileOutConsoleClose()
-	}()
+	closer = append(closer, fileOutConsoleClose)
+
 	fileErrConsoleSink, fileErrConsoleClose, fileErrConsoleErr :=  zap.Open(fileErrConsole)
 	if fileErrConsoleErr != nil {
 		panic(fileErrConsoleErr)
 	}
-	defer func() {
-		fileErrConsoleClose()
-	}()
+	closer = append(closer, fileErrConsoleClose)
 
 	// High-priority output JSON should also go to file "errJson.log", and low-priority
 	// output JSON should also go to file "outJson.log".
@@ -137,16 +148,13 @@ func demoAdvancedConfigurations() {
 	if fileOutJsonErr != nil {
 		panic(fileOutJsonErr)
 	}
-	defer func() {
-		fileOutJsonClose()
-	}()
+	closer = append(closer, fileOutJsonClose)
+
 	fileErrJsonSink, fileErrJsonClose, fileErrJsonErr :=  zap.Open(fileErrJson)
 	if fileErrJsonErr != nil {
 		panic(fileErrJsonErr)
 	}
-	defer func() {
-		fileErrJsonClose()
-	}()
+	closer = append(closer, fileErrJsonClose)
 
 	// Optimize the Kafka output for machine consumption and the console output
 	// for human operators.
@@ -167,8 +175,23 @@ func demoAdvancedConfigurations() {
 	)
 
 	// From a zapcore.Core, it's easy to construct a Logger.
-	logger := zap.New(core)
-	defer logger.Sync()
+	logger = zap.New(core)
+	//defer logger.Sync()
+	return logger, closer, nil
+}
+
+func demoAdvancedConfigurations() {
+
+	logger, closer, err := NewConfigLogger()
+	if err != nil {
+		fmt.Errorf("Error:%v", err)
+	}
+	defer func() {
+		for _, cf := range closer {
+			cf()
+		}
+	}()
+
 	logger.Info("constructed a logger")
 	logger.Info("constructed a logger 2")
 	logger.Warn("constructed a logger")
@@ -177,8 +200,94 @@ func demoAdvancedConfigurations() {
 	logger.Error("constructed a logger 2")
 }
 
+func demoGetCommandLineArgs() {
+	// Basic flag declarations are available for string,
+	// integer, and boolean options. Here we declare a
+	// string flag `word` with a default value `"foo"`
+	// and a short description. This `flag.String` function
+	// returns a string pointer (not a string value);
+	// we'll see how to use this pointer below.
+	wordPtr := flag.String("word", "foo", "a string")
+
+	// This declares `numb` and `fork` flags, using a
+	// similar approach to the `word` flag.
+	numbPtr := flag.Int("numb", 42, "an int")
+	boolPtr := flag.Bool("fork", false, "a bool")
+
+	loopPtr := flag.Bool("loop", false, "a bool")
+
+	// It's also possible to declare an option that uses an
+	// existing var declared elsewhere in the program.
+	// Note that we need to pass in a pointer to the flag
+	// declaration function.
+	var svar string
+	flag.StringVar(&svar, "svar", "bar", "a string var")
+
+	// Once all flags are declared, call `flag.Parse()`
+	// to execute the command-line parsing.
+	flag.Parse()
+
+	// Here we'll just dump out the parsed options and
+	// any trailing positional arguments. Note that we
+	// need to dereference the pointers with e.g. `*wordPtr`
+	// to get the actual option values.
+	/*
+	fmt.Println("word:", *wordPtr)
+	fmt.Println("numb:", *numbPtr)
+	fmt.Println("fork:", *boolPtr)
+	fmt.Println("svar:", svar)
+	fmt.Println("tail:", flag.Args())
+	*/
+
+	logger, closer, err := NewConfigLogger()
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		for _, cf := range closer {
+			cf()
+		}
+	}()
+
+	if *loopPtr {
+		for {
+			logger.Info("Startup flags:",
+				zap.Bool("loop",  *loopPtr),
+				zap.String("word:", *wordPtr),
+				zap.Int("numb:", *numbPtr),
+				zap.Bool("fork:", *boolPtr),
+				zap.String("svar", svar),
+				zap.Strings("tail:", flag.Args()))
+
+			time.Sleep(time.Second * 1)
+		}
+	} else {
+		logger.Info("Startup flags:",
+			zap.Bool("loop",  *loopPtr),
+			zap.String("word:", *wordPtr),
+			zap.Int("numb:", *numbPtr),
+			zap.Bool("fork:", *boolPtr),
+			zap.String("svar", svar),
+			zap.Strings("tail:", flag.Args()))
+	}
+}
+
 func main() {
-	demoPresets()
-	demoBasicConfiguratoins()
-	demoAdvancedConfigurations()
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Working directory:", dir)
+
+	workingDir = dir
+	fileLogs = workingDir + "/tmp/logs"
+	fileOutConsole = workingDir + "/tmp/outConsole.logs"
+	fileErrConsole = workingDir + "/tmp/errConsole.logs"
+	fileOutJson = workingDir + "/tmp/outJson.logs"
+	fileErrJson = workingDir + "/tmp/errJson.logs"
+
+	//demoPresets()
+	//demoBasicConfiguratoins()
+	//demoAdvancedConfigurations()
+	demoGetCommandLineArgs()
 }
