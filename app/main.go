@@ -9,20 +9,10 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"time"
 )
 
-var (
-	workingDir string
-	fileLogs = "/tmp/logs"
-	fileOutConsole = "/tmp/outConsole.logs"
-	fileErrConsole = "/tmp/errConsole.logs"
-	fileOutJson = "/tmp/outJson.logs"
-	fileErrJson = "/tmp/errJson.logs"
-)
-
-func demoPresets() {
+func demoPresets(sysCfg *Config) {
 	// Using zap's preset constructors is the simplest way to get a feel for the
 	// package, but they don't allow much customization.
 	logger := zap.NewExample() // or NewProduction, or NewDevelopment
@@ -52,7 +42,7 @@ func demoPresets() {
 	)
 }
 
-func demoBasicConfiguratoins() {
+func demoBasicConfiguratoins(sysCfg *Config) {
 	// For some users, the presets offered by the NewProduction, NewDevelopment,
 	// and NewExample constructors won't be appropriate. For most of those
 	// users, the bundled Config struct offers the right balance of flexibility
@@ -65,7 +55,7 @@ func demoBasicConfiguratoins() {
 	rawJSON := []byte(`{
 	  "level": "debug",
 	  "encoding": "json",
-	  "outputPaths": ["stdout", "/mnt/ld0/gows/src/github.com/falconray0704/u4go/app/tmp/logs"],
+	  "outputPaths": ["stdout"],
 	  "errorOutputPaths": ["stderr"],
 	  "initialFields": {"foo": "bar"},
 	  "encoderConfig": {
@@ -79,6 +69,7 @@ func demoBasicConfiguratoins() {
 	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
 		panic(err)
 	}
+	cfg.ErrorOutputPaths = append(cfg.ErrorOutputPaths, sysCfg.ZapLog.LogsPath + "logs")
 	logger, err := cfg.Build()
 	if err != nil {
 		panic(err)
@@ -88,7 +79,7 @@ func demoBasicConfiguratoins() {
 	logger.Info("logger construction succeeded")
 }
 
-func NewConfigLogger() (logger *zap.Logger, closer []func(), err error) {
+func NewConfigLogger(sysCfg *Config) (logger *zap.Logger, closer []func(), err error) {
 
 	defer func() {
 		if p := recover(); p !=  nil {
@@ -130,13 +121,13 @@ func NewConfigLogger() (logger *zap.Logger, closer []func(), err error) {
 
 	// High-priority output should also go to file "err.log", and low-priority
 	// output should also go to file "out.log".
-	fileOutConsoleSink, fileOutConsoleClose, fileOutConsoleErr := zap.Open(fileOutConsole)
+	fileOutConsoleSink, fileOutConsoleClose, fileOutConsoleErr := zap.Open(sysCfg.ZapLog.LogsPath + sysCfg.ZapLog.ConsoleFileOut)
 	if fileOutConsoleErr != nil {
 		panic(fileOutConsoleErr)
 	}
 	closer = append(closer, fileOutConsoleClose)
 
-	fileErrConsoleSink, fileErrConsoleClose, fileErrConsoleErr :=  zap.Open(fileErrConsole)
+	fileErrConsoleSink, fileErrConsoleClose, fileErrConsoleErr :=  zap.Open(sysCfg.ZapLog.LogsPath + sysCfg.ZapLog.ConsoleFileErr)
 	if fileErrConsoleErr != nil {
 		panic(fileErrConsoleErr)
 	}
@@ -144,13 +135,13 @@ func NewConfigLogger() (logger *zap.Logger, closer []func(), err error) {
 
 	// High-priority output JSON should also go to file "errJson.log", and low-priority
 	// output JSON should also go to file "outJson.log".
-	fileOutJsonSink, fileOutJsonClose, fileOutJsonErr := zap.Open(fileOutJson)
+	fileOutJsonSink, fileOutJsonClose, fileOutJsonErr := zap.Open(sysCfg.ZapLog.LogsPath + sysCfg.ZapLog.JsonFileOut)
 	if fileOutJsonErr != nil {
 		panic(fileOutJsonErr)
 	}
 	closer = append(closer, fileOutJsonClose)
 
-	fileErrJsonSink, fileErrJsonClose, fileErrJsonErr :=  zap.Open(fileErrJson)
+	fileErrJsonSink, fileErrJsonClose, fileErrJsonErr :=  zap.Open(sysCfg.ZapLog.LogsPath + sysCfg.ZapLog.JsonFileErr)
 	if fileErrJsonErr != nil {
 		panic(fileErrJsonErr)
 	}
@@ -180,9 +171,9 @@ func NewConfigLogger() (logger *zap.Logger, closer []func(), err error) {
 	return logger, closer, nil
 }
 
-func demoAdvancedConfigurations() {
+func demoAdvancedConfigurations(sysCfg *Config) {
 
-	logger, closer, err := NewConfigLogger()
+	logger, closer, err := NewConfigLogger(sysCfg)
 	if err != nil {
 		fmt.Errorf("Error:%v", err)
 	}
@@ -200,7 +191,7 @@ func demoAdvancedConfigurations() {
 	logger.Error("constructed a logger 2")
 }
 
-func demoGetCommandLineArgs() {
+func demoGetCommandLineArgs(sysCfg *Config) {
 	// Basic flag declarations are available for string,
 	// integer, and boolean options. Here we declare a
 	// string flag `word` with a default value `"foo"`
@@ -239,7 +230,7 @@ func demoGetCommandLineArgs() {
 	fmt.Println("tail:", flag.Args())
 	*/
 
-	logger, closer, err := NewConfigLogger()
+	logger, closer, err := NewConfigLogger(sysCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -273,6 +264,7 @@ func demoGetCommandLineArgs() {
 }
 
 func main() {
+	/*
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		log.Fatal(err)
@@ -285,9 +277,19 @@ func main() {
 	fileErrConsole = workingDir + "/tmp/errConsole.logs"
 	fileOutJson = workingDir + "/tmp/outJson.logs"
 	fileErrJson = workingDir + "/tmp/errJson.logs"
+	*/
+	//demoGetCommandLineArgs(sysCfg)
 
-	//demoPresets()
-	//demoBasicConfiguratoins()
-	//demoAdvancedConfigurations()
-	demoGetCommandLineArgs()
+	ymlPtr := flag.String("c", "./configs/appCfgs.yaml", "yaml file to read config from")
+	flag.Parse()
+	sysCfg, err := NewConfig(*ymlPtr)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	//demoPresets(sysCfg)
+	//demoBasicConfiguratoins(sysCfg)
+	demoAdvancedConfigurations(sysCfg)
+
 }

@@ -2,13 +2,15 @@
 .PHONY: all
 all: outBin docker
 	mkdir -p ./tmp
+	mkdir -p ./testDataTmp
 
 outBin:
-	go build -o $@ main.go
+	go build -o $@ .
 
 .PHONY: test
 test:
 	@echo "Running test..."
+	go test .
 #	go test -race $(PKGS)
 
 .PHONY: cover
@@ -43,6 +45,7 @@ docker: outBin
 clean:
 	rm -rf outBin
 	rm -rf ./tmp/*
+	rm -rf ./testDataTmp
 	docker rmi -f myapp:falcon
 
 

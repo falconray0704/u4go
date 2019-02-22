@@ -7,26 +7,39 @@ set -o nounset
 
 run_native_func()
 {
-    ./outBin -word=opt -numb=7 -fork -svar=flag
+
+    ./outBin
+    #./outBin -c="./configs/appCfgs.yaml"
     echo "ret:$?"
 
-    ./outBin -word=opt
+}
+
+run_native_cmd_test_func()
+{
+    set -x
+
+    ./outBin -c="./configs/appCfgs.yaml" -word=opt -numb=7 -fork -svar=flag
     echo "ret:$?"
 
-    ./outBin -word=opt a1 a2 a3
+    ./outBin -c="./configs/appCfgs.yaml" -word=opt
     echo "ret:$?"
 
-    ./outBin -word=opt a1 a2 a3 -numb=7
+    ./outBin -c="./configs/appCfgs.yaml" -word=opt a1 a2 a3
     echo "ret:$?"
 
-    ./outBin -h
+    ./outBin -c="./configs/appCfgs.yaml" -word=opt a1 a2 a3 -numb=7
     echo "ret:$?"
 
-    ./outBin -wat
+    ./outBin -c="./configs/appCfgs.yaml" -h
     echo "ret:$?"
 
-    ./outBin -loop=true -word=opt a1 a2 a3 looping
+    ./outBin -c="./configs/appCfgs.yaml" -wat
     echo "ret:$?"
+
+    ./outBin -c="./configs/appCfgs.yaml" -loop=true -word=opt a1 a2 a3 looping
+    echo "ret:$?"
+
+    set +x
 }
 
 run_docker_func()
@@ -53,7 +66,7 @@ usage()
 
 [ $# -lt 1 ] && usage && exit
 
-mkdir -f ./tmp
+mkdir -p ./tmp
 
 case $1 in
     lc) echo "Run native..."
