@@ -1,0 +1,21 @@
+
+
+zap_log:
+  logsPath: ./tmp/
+  consoleFileOut: outConsole.logs
+  consoleFileErr: errConsole.logs
+  jsonFileOut: outJson.logs
+  jsonFileErr: errJson.logs
+
+dbs_infos:
+  mysql:
+    user_name: admin
+    password: root
+    url:	mysql.doryhub.com
+    port:	2000
+  redis:
+    user_name: admin
+    password: root
+    url:	redis.doryhub.com
+    port:	3000
+
