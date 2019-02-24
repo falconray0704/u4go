@@ -28,5 +28,8 @@ vendor
 tmp
 testDataTmp
 
+#logs
+./logsData/*.logs
+
 
 

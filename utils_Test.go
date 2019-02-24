@@ -1,13 +1,13 @@
-package main
+package u4go
 
 import (
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
 // TempFile persists contents and returns the path and a clean func
-func TempFile(t *testing.T, fileNamePrefix, contents string) (path string, clean func()) {
-	fileLocation := "./testDataTmp/"
+func TempFile(t *testing.T, fileLocation, fileNamePrefix, contents string) (path string, clean func()) {
 	content := []byte(contents)
 	tmpfile, err := ioutil.TempFile(fileLocation, fileNamePrefix)
 	if err != nil {
@@ -23,7 +23,7 @@ func TempFile(t *testing.T, fileNamePrefix, contents string) (path string, clean
 
 	filePath := tmpfile.Name()
 	return filePath, func() {
-		//_ = os.Remove(tmpfile.Name())
+		_ = os.Remove(tmpfile.Name())
 	}
 }
 

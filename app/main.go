@@ -1,17 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/falconray0704/u4go"
+	"github.com/falconray0704/u4go/app/cfg"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"io/ioutil"
 	"log"
-	"os"
-	"time"
 )
 
+/*
 func demoPresets(sysCfg *Config) {
 	// Using zap's preset constructors is the simplest way to get a feel for the
 	// package, but they don't allow much customization.
@@ -79,119 +77,7 @@ func demoBasicConfiguratoins(sysCfg *Config) {
 	logger.Info("logger construction succeeded")
 }
 
-func NewConfigLogger(sysCfg *Config) (logger *zap.Logger, closer []func(), err error) {
-
-	defer func() {
-		if p := recover(); p !=  nil {
-			for _, cf := range closer {
-				cf()
-			}
-			err, _ = p.(error)
-		}
-	}()
-	// The bundled Config struct only supports the most common configuration
-	// options. More complex needs, like splitting logs between multiple files
-	// or writing to non-file outputs, require use of the zapcore package.
-	//
-	// In this example, imagine we're both sending our logs to Kafka and writing
-	// them to the console. We'd like to encode the console output and the Kafka
-	// topics differently, and we'd also like special treatment for
-	// high-priority logs.
-
-	// First, define our level-handling logic.
-	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.ErrorLevel
-	})
-	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl < zapcore.ErrorLevel
-	})
-
-	// Assume that we have clients for two Kafka topics. The clients implement
-	// zapcore.WriteSyncer and are safe for concurrent use. (If they only
-	// implement io.Writer, we can use zapcore.AddSync to add a no-op Sync
-	// method. If they're not safe for concurrent use, we can add a protecting
-	// mutex with zapcore.Lock.)
-	topicDebugging := zapcore.AddSync(ioutil.Discard)
-	topicErrors := zapcore.AddSync(ioutil.Discard)
-
-	// High-priority output should also go to standard error, and low-priority
-	// output should also go to standard out.
-	consoleDebugging := zapcore.Lock(os.Stdout)
-	consoleErrors := zapcore.Lock(os.Stderr)
-
-	// High-priority output should also go to file "err.log", and low-priority
-	// output should also go to file "out.log".
-	fileOutConsoleSink, fileOutConsoleClose, fileOutConsoleErr := zap.Open(sysCfg.ZapLog.LogsPath + sysCfg.ZapLog.ConsoleFileOut)
-	if fileOutConsoleErr != nil {
-		panic(fileOutConsoleErr)
-	}
-	closer = append(closer, fileOutConsoleClose)
-
-	fileErrConsoleSink, fileErrConsoleClose, fileErrConsoleErr :=  zap.Open(sysCfg.ZapLog.LogsPath + sysCfg.ZapLog.ConsoleFileErr)
-	if fileErrConsoleErr != nil {
-		panic(fileErrConsoleErr)
-	}
-	closer = append(closer, fileErrConsoleClose)
-
-	// High-priority output JSON should also go to file "errJson.log", and low-priority
-	// output JSON should also go to file "outJson.log".
-	fileOutJsonSink, fileOutJsonClose, fileOutJsonErr := zap.Open(sysCfg.ZapLog.LogsPath + sysCfg.ZapLog.JsonFileOut)
-	if fileOutJsonErr != nil {
-		panic(fileOutJsonErr)
-	}
-	closer = append(closer, fileOutJsonClose)
-
-	fileErrJsonSink, fileErrJsonClose, fileErrJsonErr :=  zap.Open(sysCfg.ZapLog.LogsPath + sysCfg.ZapLog.JsonFileErr)
-	if fileErrJsonErr != nil {
-		panic(fileErrJsonErr)
-	}
-	closer = append(closer, fileErrJsonClose)
-
-	// Optimize the Kafka output for machine consumption and the console output
-	// for human operators.
-	kafkaEncoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
-	consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
-
-	// Join the outputs, encoders, and level-handling functions into
-	// zapcore.Cores, then tee the four cores together.
-	core := zapcore.NewTee(
-		zapcore.NewCore(kafkaEncoder, topicErrors, highPriority),
-		zapcore.NewCore(kafkaEncoder, fileErrJsonSink, highPriority),
-		zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
-		zapcore.NewCore(consoleEncoder, fileErrConsoleSink, highPriority),
-		zapcore.NewCore(kafkaEncoder, topicDebugging, lowPriority),
-		zapcore.NewCore(kafkaEncoder, fileOutJsonSink, lowPriority),
-		zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
-		zapcore.NewCore(consoleEncoder, fileOutConsoleSink, lowPriority),
-	)
-
-	// From a zapcore.Core, it's easy to construct a Logger.
-	logger = zap.New(core)
-	//defer logger.Sync()
-	return logger, closer, nil
-}
-
-func demoAdvancedConfigurations(sysCfg *Config) {
-
-	logger, closer, err := NewConfigLogger(sysCfg)
-	if err != nil {
-		fmt.Errorf("Error:%v", err)
-	}
-	defer func() {
-		for _, cf := range closer {
-			cf()
-		}
-	}()
-
-	logger.Info("constructed a logger")
-	logger.Info("constructed a logger 2")
-	logger.Warn("constructed a logger")
-	logger.Warn("constructed a logger 2")
-	logger.Error("constructed a logger")
-	logger.Error("constructed a logger 2")
-}
-
-func demoGetCommandLineArgs(sysCfg *Config) {
+func demoGetCommandLineArgs(sysCfg *cfg.Config) {
 	// Basic flag declarations are available for string,
 	// integer, and boolean options. Here we declare a
 	// string flag `word` with a default value `"foo"`
@@ -222,13 +108,12 @@ func demoGetCommandLineArgs(sysCfg *Config) {
 	// any trailing positional arguments. Note that we
 	// need to dereference the pointers with e.g. `*wordPtr`
 	// to get the actual option values.
-	/*
-	fmt.Println("word:", *wordPtr)
-	fmt.Println("numb:", *numbPtr)
-	fmt.Println("fork:", *boolPtr)
-	fmt.Println("svar:", svar)
-	fmt.Println("tail:", flag.Args())
-	*/
+
+	//fmt.Println("word:", *wordPtr)
+	//fmt.Println("numb:", *numbPtr)
+	//fmt.Println("fork:", *boolPtr)
+	//fmt.Println("svar:", svar)
+	//fmt.Println("tail:", flag.Args())
 
 	logger, closer, err := NewConfigLogger(sysCfg)
 	if err != nil {
@@ -263,6 +148,18 @@ func demoGetCommandLineArgs(sysCfg *Config) {
 	}
 }
 
+*/
+
+func demoAdvancedConfigurations(logger *zap.Logger) {
+
+	logger.Info("constructed a logger")
+	logger.Info("constructed a logger 2")
+	logger.Warn("constructed a logger")
+	logger.Warn("constructed a logger 2")
+	logger.Error("constructed a logger")
+	logger.Error("constructed a logger 2")
+}
+
 func main() {
 	/*
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -280,16 +177,30 @@ func main() {
 	*/
 	//demoGetCommandLineArgs(sysCfg)
 
-	ymlPtr := flag.String("c", "./configs/appCfgs.yaml", "yaml file to read config from")
+	ymlPtr := flag.String("c", "./sysDatas/cfgs/appCfgs.yaml", "yaml file to read config from")
 	flag.Parse()
-	sysCfg, err := NewConfig(*ymlPtr)
+	sysCfg, err := cfg.NewConfig(*ymlPtr)
 
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	//demoPresets(sysCfg)
-	//demoBasicConfiguratoins(sysCfg)
-	demoAdvancedConfigurations(sysCfg)
+	logsLocation := sysCfg.ZapLog.LogsPath
+	consoleFileOut := logsLocation + "outConsole.logs"
+	consoleFileErr := logsLocation + "errConsole.logs"
+	jsonFileOut := logsLocation + "outJson.logs"
+	jsonFileErr := logsLocation + "errJson.logs"
+	logger, closers, err := u4go.NewConfigLogger(consoleFileOut, consoleFileErr, jsonFileOut, jsonFileErr)
+
+	if err != nil {
+		fmt.Errorf("Error:%v", err)
+	}
+	defer func() {
+		for _, cf := range closers {
+			cf()
+		}
+	}()
+
+	demoAdvancedConfigurations(logger)
 
 }

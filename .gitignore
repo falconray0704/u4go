@@ -24,3 +24,6 @@ uGrpc_server
 # vendor
 #vendor
 
+#logs
+./logsData/*.logs
+

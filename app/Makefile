@@ -1,8 +1,8 @@
 
 .PHONY: all
 all: outBin docker
-	mkdir -p ./tmp
 	mkdir -p ./testDataTmp
+	mkdir -p ./logsData
 
 outBin:
 	go build -o $@ .
@@ -44,7 +44,6 @@ docker: outBin
 .PHONY: clean
 clean:
 	rm -rf outBin
-	rm -rf ./tmp/*
 	rm -rf ./testDataTmp
 	docker rmi -f myapp:falcon
 

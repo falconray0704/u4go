@@ -9,11 +9,12 @@ ARG gid
 RUN groupadd -r "$group" -g "$gid" && useradd -r -u "$uid" -g "$gid" "$user"
 
 RUN mkdir -p /myApp/tmp \
-    && mkdir -p /myApp/configs
+    && mkdir -p /myApp/logsData \
+    && mkdir -p /myApp/sysDatas/cfgs
 
 COPY ./outBin /myApp/
 COPY ./run.sh /myApp/
-COPY ./configs/appCfgs.yaml /myApp/configs/
+COPY ./sysDatas/cfgs/appCfgs.yaml /myApp/sysDatas/cfgs/
 
 RUN chown -R $user:$group /myApp
 
@@ -21,7 +22,7 @@ ENV DEMO_VERSION 7.2.0
 ENV VERSION=1.0 DEBUG=on \
     NAME="Hello world"
 
-VOLUME /myApp/tmp
+VOLUME /myApp/logsData
 
 EXPOSE 443 80
 

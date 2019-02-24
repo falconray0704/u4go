@@ -1,13 +1,15 @@
-package main
+package cfg
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/falconray0704/u4go"
 )
 
 func TestNewConfig(t *testing.T) {
-	path, clean := TempFile(t, "appCfgs-tmp",`
+	fileLocation := "./testDataTmp/"
+	path, clean := u4go.TempFile(t, fileLocation,"appCfgs-tmp",`
 
 zap_log:
   logsPath: ./tmp/
@@ -49,3 +51,27 @@ dbs_infos:
 	assert.Equal(t, DBInfo{UserName: "admin", Password: "root", Url: "redis.doryhub.com", Port: 3000}, dbredis)
 }
 
+func TestNewConfigReadDataError(t *testing.T) {
+	path :="./testDataTmp/noAppCfg.yaml"
+
+	config, err := NewConfig(path)
+	assert.NotNilf(t, err, "Load the non-exsit config file:%s expect non-nil error.", path)
+	assert.Nil(t, config, "Load the non-exsit config file:%s expect nil config .", path)
+
+}
+
+func TestNewConfigParseDataError(t *testing.T) {
+	fileLocation := "./testDataTmp/"
+	path, clean := u4go.TempFile(t, fileLocation,"appCfgs-tmp",`
+
+incorrect datas should not be parsed
+
+`)
+	defer clean()
+
+	config, err := NewConfig(path)
+
+	assert.Nil(t, config, "Load the incorrect config file:%s expect nil config.", path)
+	assert.NotNil(t, err, "Load the incorrect config file:%s expect non-nil error.", path)
+
+}

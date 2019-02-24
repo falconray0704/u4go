@@ -1,7 +1,7 @@
 
 
 zap_log:
-  logsPath: ./tmp/
+  logsPath: ./logsData/
   consoleFileOut: outConsole.logs
   consoleFileErr: errConsole.logs
   jsonFileOut: outJson.logs
