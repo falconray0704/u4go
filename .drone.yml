@@ -6,6 +6,6 @@ pipeline:
   test:
     image: golang:latest
     commands:
-      - make test
-      - make cover
+      - make -f MakefileDrone test
+      - make -f MakefileDrone cover
 

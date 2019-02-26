@@ -1,0 +1,31 @@
+
+PKGS ?= github.com/falconray0704/u4go
+
+.PHONY: all
+all: env
+
+.PHONY: env
+env:
+	rm -rf ./logsData
+	mkdir -p ./logsData
+	echo "" > ./logsData/log.root
+	chown root:root ./logsData/log.root
+
+.PHONY: test
+test: env
+	@echo "Running test..."
+	go test $(PKGS)
+
+.PHONY: cover
+cover: env
+	@echo "Running coverage testing..."
+	./scripts/cover.sh $(PKGS)
+
+.PHONY: clean
+clean:
+	rm -rf ./logsData
+	rm -rf ./cover.out
+	rm -rf ./cover.html
+	go clean
+
+
