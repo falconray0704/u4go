@@ -32,6 +32,11 @@ test: env
 #	go test -race $(PKGS)
 	go test $(PKGS)
 
+.PHONY: testTravisCI
+testTravisCI: env
+	@echo "Running test..."
+	go test $(PKGS)
+
 .PHONY: cover
 cover: env
 	@echo "Running coverage testing..."
