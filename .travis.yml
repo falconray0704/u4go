@@ -15,6 +15,9 @@ script:
   #  - make lint
   - make test
     #  - make bench
-#after_success:
-#  - make cover
-#  - bash <(curl -s https://codecov.io/bash)
+after_success:
+  - make cover
+  - bash <(curl -s https://codecov.io/bash)
+
+
+
