@@ -10,6 +10,7 @@ env:
 	mkdir -p ./logsData
 	echo "" > ./logsData/log.root
 	chown root:root ./logsData/log.root
+	go get -u go.uber.org/zap
 
 .PHONY: test
 test: env
