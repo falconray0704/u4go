@@ -1,11 +1,8 @@
 # u4go
-# Build on Drone CI     [![Build Status][dci-img]][dci]
-# Build on Travis CI    [![Build Status][tci-img]][tci]
-# Coverage testing on   [![Coverage Status][cov-img]][cov]
+# Build on private Drone CI     [![Build Status][dci-img]][dci]
+# [![Build Status][tci-img]][tci] [![Coverage Status][cov-img]][cov]
 
 utils for golang
-
-
 
 
 [dci-img]: https://drone.doryhub.com/api/badges/falconray0704/u4go/status.svg
