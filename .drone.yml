@@ -1,0 +1,11 @@
+workspace:
+  base: /go
+  path: src/github.com/falconray0704/u4go
+
+pipeline:
+  test:
+    image: golang:latest
+    commands:
+      - make test
+      - make cover
+

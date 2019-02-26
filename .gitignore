@@ -25,5 +25,9 @@ uGrpc_server
 #vendor
 
 #logs
-./logsData/*.logs
+logsData
+
+#cover testing
+cover.out
+cover.html
 
