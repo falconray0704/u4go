@@ -13,7 +13,7 @@ cache:
 #  - make dependencies
 script:
   #  - make lint
-  - make testTravisCI
+  - make test
     #  - make bench
 #after_success:
 #  - make cover
