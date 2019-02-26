@@ -8,9 +8,9 @@ all: env
 env:
 	rm -rf ./logsData
 	mkdir -p ./logsData
-	echo "" > ./logsData/log.root
-	chmod a-w ./logsData/log.root
-	ls -al ./logsData/log.root
+#	echo "" > ./logsData/log.root
+#	chmod a-w ./logsData/log.root
+#	ls -al ./logsData/log.root
 	go get -u go.uber.org/zap
 	go get -u github.com/stretchr/testify/assert
 

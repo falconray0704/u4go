@@ -8,7 +8,8 @@ import (
 func TestNewConfigLogger_fail_on_consoleFileOut(t *testing.T) {
 
 	logsLocation := "./logsData/"
-	consoleFileOut := logsLocation + "log.root"
+	//consoleFileOut := logsLocation + "log.root"
+	consoleFileOut := "ftpftp://log.root"
 	consoleFileErr := logsLocation + "errConsole.logs"
 	jsonFileOut := logsLocation + "outJson.logs"
 	jsonFileErr := logsLocation + "errJson.logs"
@@ -23,7 +24,8 @@ func TestNewConfigLogger_fail_on_consoleFileErr(t *testing.T) {
 
 	logsLocation := "./logsData/"
 	consoleFileOut := logsLocation + "outConsole.logs"
-	consoleFileErr := logsLocation + "log.root"
+	//consoleFileErr := logsLocation + "log.root"
+	consoleFileErr := "ftpftp://log.root"
 	jsonFileOut := logsLocation + "outJson.logs"
 	jsonFileErr := logsLocation + "errJson.logs"
 
@@ -38,7 +40,8 @@ func TestNewConfigLogger_fail_on_jsonFileOut(t *testing.T) {
 	logsLocation := "./logsData/"
 	consoleFileOut := logsLocation + "outConsole.logs"
 	consoleFileErr := logsLocation + "errConsole.logs"
-	jsonFileOut := logsLocation + "log.root"
+	//jsonFileOut := logsLocation + "log.root"
+	jsonFileOut := "ftpftp://log.root"
 	jsonFileErr := logsLocation + "errJson.logs"
 
 	logger, _, err := NewConfigLogger(consoleFileOut, consoleFileErr, jsonFileOut, jsonFileErr)
@@ -53,7 +56,8 @@ func TestNewConfigLogger_fail_on_jsonFileErr(t *testing.T) {
 	consoleFileOut := logsLocation + "outConsole.logs"
 	consoleFileErr := logsLocation + "errConsole.logs"
 	jsonFileOut := logsLocation + "outJson.logs"
-	jsonFileErr := logsLocation + "log.root"
+	//jsonFileErr := logsLocation + "log.root"
+	jsonFileErr := "ftpftp://log.root"
 
 	logger, _, err := NewConfigLogger(consoleFileOut, consoleFileErr, jsonFileOut, jsonFileErr)
 	assert.NotNilf(t, err, "Open an no permission file:%s for jsonFileErr expect non-nil error", jsonFileErr)

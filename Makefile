@@ -20,9 +20,9 @@ all: env
 env:
 	rm -rf ./logsData
 	mkdir -p ./logsData
-	echo "" > ./logsData/log.root
+#	echo "" > ./logsData/log.root
 #	$$(sudo chown root:root ./logsData/log.root)
-	$$(sudo chmod a-w ./logsData/log.root)
+#	$$(sudo chmod a-w ./logsData/log.root)
 
 .PHONY: test
 test: env
