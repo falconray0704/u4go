@@ -23,6 +23,8 @@ env:
 #	echo "" > ./logsData/log.root
 #	$$(sudo chown root:root ./logsData/log.root)
 #	$$(sudo chmod a-w ./logsData/log.root)
+	go get -u go.uber.org/zap
+	go get -u github.com/stretchr/testify/assert
 
 .PHONY: test
 test: env
