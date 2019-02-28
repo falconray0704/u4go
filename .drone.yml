@@ -6,6 +6,7 @@ pipeline:
   test:
     image: golang:latest
     commands:
+      - make dependencies
       - make test
       - make cover
 

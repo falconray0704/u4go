@@ -10,7 +10,7 @@ cache:
   directories:
     - vendor
 #install:
-#  - make dependencies
+  - make dependencies
 script:
   #  - make lint
   - make test
