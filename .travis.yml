@@ -9,7 +9,7 @@ env:
 cache:
   directories:
     - vendor
-#install:
+install:
   - make dependencies
 script:
   #  - make lint
