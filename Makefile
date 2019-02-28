@@ -1,5 +1,7 @@
 
-PKGS ?= github.com/falconray0704/u4go
+PKGS ?= github.com/falconray0704/u4go \
+		github.com/falconray0704/u4go/app/cfg
+
 #PKGS ?= $(shell glide novendor)
 
 
@@ -16,6 +18,11 @@ all: env
 	@echo "----------------------------------------"
 	@echo ""
 
+.PHONY: dependencies
+dependencies:
+	go get -u go.uber.org/zap
+	go get -u github.com/stretchr/testify/assert
+
 .PHONY: env
 env:
 	rm -rf ./logsData
@@ -23,22 +30,24 @@ env:
 #	echo "" > ./logsData/log.root
 #	$$(sudo chown root:root ./logsData/log.root)
 #	$$(sudo chmod a-w ./logsData/log.root)
-	go get -u go.uber.org/zap
-	go get -u github.com/stretchr/testify/assert
 
 .PHONY: test
 test: env
+	@echo "Cleanning testing cache..."
+	go clean -testcache $(PKGS)
 	@echo "Running test..."
 #	go test -race $(PKGS)
 	go test $(PKGS)
 
 .PHONY: testTravisCI
-testTravisCI: env
+testTravisCI:
 	@echo "Running test..."
 	go test $(PKGS)
 
 .PHONY: cover
 cover: env
+	@echo "Cleanning testing cache..."
+	go clean -testcache $(PKGS)
 	@echo "Running coverage testing..."
 	./scripts/cover.sh $(PKGS)
 
@@ -53,6 +62,5 @@ clean:
 	rm -rf ./logsData
 	rm -rf ./cover.out
 	rm -rf ./cover.html
-	go clean
-
+	go clean -testcache $(PKGS)
 
