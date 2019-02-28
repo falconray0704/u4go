@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
-	fileLocation := "./testDataTmp/"
+	fileLocation := "./tmp/"
 	path, clean := u4go.TempFile(t, fileLocation,"appCfgs-tmp",`
 
 zap_log:
@@ -52,7 +52,7 @@ dbs_infos:
 }
 
 func TestNewConfigReadDataError(t *testing.T) {
-	path :="./testDataTmp/noAppCfg.yaml"
+	path :="./tmp/noAppCfg.yaml"
 
 	config, err := NewConfig(path)
 	assert.NotNilf(t, err, "Load the non-exsit config file:%s expect non-nil error.", path)
@@ -61,7 +61,7 @@ func TestNewConfigReadDataError(t *testing.T) {
 }
 
 func TestNewConfigParseDataError(t *testing.T) {
-	fileLocation := "./testDataTmp/"
+	fileLocation := "./tmp/"
 	path, clean := u4go.TempFile(t, fileLocation,"appCfgs-tmp",`
 
 incorrect datas should not be parsed

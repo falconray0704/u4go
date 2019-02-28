@@ -22,11 +22,14 @@ all: env
 dependencies:
 	go get -u go.uber.org/zap
 	go get -u github.com/stretchr/testify/assert
+	go get -u gopkg.in/yaml.v2
 
 .PHONY: env
 env:
 	rm -rf ./logsData
 	mkdir -p ./logsData
+	mkdir -p ./tmp
+	mkdir -p ./app/cfg/tmp
 #	echo "" > ./logsData/log.root
 #	$$(sudo chown root:root ./logsData/log.root)
 #	$$(sudo chmod a-w ./logsData/log.root)
@@ -54,6 +57,8 @@ bench:
 
 .PHONY: clean
 clean:
+	rm -rf ./tmp
+	rm -rf ./app/cfg/tmp
 	rm -rf ./logsData
 	rm -rf ./cover.out
 	rm -rf ./cover.html
