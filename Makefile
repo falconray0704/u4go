@@ -39,11 +39,6 @@ test: env
 #	go test -race $(PKGS)
 	go test $(PKGS)
 
-.PHONY: testTravisCI
-testTravisCI:
-	@echo "Running test..."
-	go test $(PKGS)
-
 .PHONY: cover
 cover: env
 	@echo "Cleanning testing cache..."
@@ -62,5 +57,5 @@ clean:
 	rm -rf ./logsData
 	rm -rf ./cover.out
 	rm -rf ./cover.html
-	go clean -testcache $(PKGS)
+	go clean -cache $(PKGS)
 
