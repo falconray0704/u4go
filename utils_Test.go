@@ -19,18 +19,17 @@ func (this *TmpFile) Name() string {
 	return this.name
 }
 
+type GetIoFileFunc func(dir, pattern string) (uIoUtil.IoFile, error)
+
 // TempFile persists contents and returns the path and a clean func
-func (this *TmpFile) NewFile(fileLocation, fileNamePrefix string, contents []byte) (path string, clean func(), err error) {
+func newTempFile(getIoFileFunc GetIoFileFunc, fileLocation, fileNamePrefix string, contents []byte) (path string, clean func(), err error) {
 
 	var errOne, multiErr error
 	var ioFile uIoUtil.IoFile
-	//var filePath string
 
-	if this == nil || this.GetFileFunc == nil {
-		if ioFile, errOne = ioutil.TempFile(fileLocation, fileNamePrefix); errOne != nil {
-			err = multierr.Append(multiErr, errOne)
-			return "",nil, err
-		}
+	if ioFile, errOne = getIoFileFunc(fileLocation, fileNamePrefix); errOne != nil {
+		err = multierr.Append(multiErr, errOne)
+		return "",nil, err
 	}
 
 	defer func() {
@@ -54,8 +53,11 @@ func (this *TmpFile) NewFile(fileLocation, fileNamePrefix string, contents []byt
 	return ioFile.Name(), clean, nil
 }
 
+func getIoutilTempfile(fileLocation, fileNamePrefix string) (uIoUtil.IoFile, error) {
+	return ioutil.TempFile(fileLocation, fileNamePrefix)
+}
+
 func TempFile(fileLocation, fileNamePrefix string, contents []byte) (path string, clean func(), err error) {
-	var tmpFile *TmpFile
-	return tmpFile.NewFile(fileLocation, fileNamePrefix, contents)
+	return newTempFile(getIoutilTempfile, fileLocation, fileNamePrefix, contents)
 }
 
