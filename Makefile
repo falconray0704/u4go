@@ -1,6 +1,7 @@
 
 PKGS ?= github.com/falconray0704/u4go \
-		github.com/falconray0704/u4go/app/cfg
+		github.com/falconray0704/u4go/app/cfg \
+		github.com/falconray0704/u4go/internal/ioutils
 
 #PKGS ?= $(shell glide novendor)
 

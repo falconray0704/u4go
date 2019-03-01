@@ -3,29 +3,19 @@ package u4go
 import (
 	"errors"
 	"fmt"
-	uIoUtil "github.com/falconray0704/u4go/internal/ioutil"
+	uIoUtils "github.com/falconray0704/u4go/internal/ioutils"
 	"go.uber.org/multierr"
 	"io/ioutil"
 	"os"
 )
 
-type TmpFile struct {
-	GetFileFunc	func(dir, pattern string) (uIoUtil.IoFile, error)
-	name string // name of the file as presented to Open.
-}
-
-// Name returns the name of the file as presented to Open.
-func (this *TmpFile) Name() string {
-	return this.name
-}
-
-type GetIoFileFunc func(dir, pattern string) (uIoUtil.IoFile, error)
+type GetIoFileFunc func(dir, pattern string) (uIoUtils.IoFile, error)
 
 // TempFile persists contents and returns the path and a clean func
 func newTempFile(getIoFileFunc GetIoFileFunc, fileLocation, fileNamePrefix string, contents []byte) (path string, clean func(), err error) {
 
 	var errOne, multiErr error
-	var ioFile uIoUtil.IoFile
+	var ioFile uIoUtils.IoFile
 
 	if ioFile, errOne = getIoFileFunc(fileLocation, fileNamePrefix); errOne != nil {
 		err = multierr.Append(multiErr, errOne)
@@ -53,7 +43,7 @@ func newTempFile(getIoFileFunc GetIoFileFunc, fileLocation, fileNamePrefix strin
 	return ioFile.Name(), clean, nil
 }
 
-func getIoutilTempfile(fileLocation, fileNamePrefix string) (uIoUtil.IoFile, error) {
+func getIoutilTempfile(fileLocation, fileNamePrefix string) (uIoUtils.IoFile, error) {
 	return ioutil.TempFile(fileLocation, fileNamePrefix)
 }
 

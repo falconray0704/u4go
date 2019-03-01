@@ -2,7 +2,7 @@ package u4go
 
 import (
 	"errors"
-	uIoUtil "github.com/falconray0704/u4go/internal/ioutil"
+	uIoUtils "github.com/falconray0704/u4go/internal/ioutils"
 	"testing"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,7 +43,7 @@ func Test_newTempFile_Mock_getIoFileFunc_Err(t *testing.T) {
 	fileLocation := "./tmp/"
 	contents := []byte{}
 
-	mock_getIoFile_Err := func(fileLocation, fileNamePrefix string) (uIoUtil.IoFile, error) {
+	mock_getIoFile_Err := func(fileLocation, fileNamePrefix string) (uIoUtils.IoFile, error) {
 		return nil, errors.New("Mocking get IoFile fail.")
 	}
 
@@ -67,8 +67,8 @@ func Test_newTempFile_Mock_IoFile_Write(t *testing.T) {
 
 
 
-	mock_getIoFile_Write = func(fileLocation, fileNamePrefix string) (uIoUtil.IoFile, error) {
-		ioFile := uIoUtil.GetIoFileMockAllSuccess()
+	mock_getIoFile_Write = func(fileLocation, fileNamePrefix string) (uIoUtils.IoFile, error) {
+		ioFile := uIoUtils.GetIoFileMockAllSuccess()
 		ioFile.FileName = fileLocation + fileNamePrefix
 		return ioFile, nil
 	}
@@ -78,10 +78,10 @@ func Test_newTempFile_Mock_IoFile_Write(t *testing.T) {
 	assert.NoError(t, err, "Get IoFile success expect no err.")
 
 
-	mock_getIoFile_Write = func(fileLocation, fileNamePrefix string) (uIoUtil.IoFile, error) {
-		ioFile := uIoUtil.GetIoFileMockAllSuccess()
+	mock_getIoFile_Write = func(fileLocation, fileNamePrefix string) (uIoUtils.IoFile, error) {
+		ioFile := uIoUtils.GetIoFileMockAllSuccess()
 		ioFile.FileName = fileLocation + fileNamePrefix
-		ioFile.WriteFunc = uIoUtil.WriteFuncMockErr
+		ioFile.WriteFunc = uIoUtils.WriteFuncMockErr
 		return ioFile, nil
 	}
 	path, clean, err = newTempFile(mock_getIoFile_Write,fileLocation,"appCfgs-tmp", contents)
@@ -89,10 +89,10 @@ func Test_newTempFile_Mock_IoFile_Write(t *testing.T) {
 	assert.NotNil(t, clean, "Get IoFile success, but write fail expect non-nil clean().")
 	assert.Error(t, err, "Get IoFile success, but write fail  expect non-nil err.")
 
-	mock_getIoFile_Write = func(fileLocation, fileNamePrefix string) (uIoUtil.IoFile, error) {
-		ioFile := uIoUtil.GetIoFileMockAllSuccess()
+	mock_getIoFile_Write = func(fileLocation, fileNamePrefix string) (uIoUtils.IoFile, error) {
+		ioFile := uIoUtils.GetIoFileMockAllSuccess()
 		ioFile.FileName = fileLocation + fileNamePrefix
-		ioFile.WriteFunc = uIoUtil.WriteFuncMockLenNotEnough
+		ioFile.WriteFunc = uIoUtils.WriteFuncMockLenNotEnough
 		return ioFile, nil
 	}
 	path, clean, err = newTempFile(mock_getIoFile_Write,fileLocation,"appCfgs-tmp", contents)
@@ -100,11 +100,11 @@ func Test_newTempFile_Mock_IoFile_Write(t *testing.T) {
 	assert.NotNil(t, clean, "Get IoFile success, but write incorrect len expect non-nil clean().")
 	assert.Error(t, err, "Get IoFile success, but write incorrect len  expect non-nil err.")
 
-	mock_getIoFile_Write = func(fileLocation, fileNamePrefix string) (uIoUtil.IoFile, error) {
-		ioFile := uIoUtil.GetIoFileMockAllSuccess()
+	mock_getIoFile_Write = func(fileLocation, fileNamePrefix string) (uIoUtils.IoFile, error) {
+		ioFile := uIoUtils.GetIoFileMockAllSuccess()
 		ioFile.FileName = fileLocation + fileNamePrefix
-		ioFile.WriteFunc = uIoUtil.WriteFuncMockSuccess
-		ioFile.CloseFunc = uIoUtil.CloseFuncMockErr
+		ioFile.WriteFunc = uIoUtils.WriteFuncMockSuccess
+		ioFile.CloseFunc = uIoUtils.CloseFuncMockErr
 		return ioFile, nil
 	}
 	path, clean, err = newTempFile(mock_getIoFile_Write,fileLocation,"appCfgs-tmp", contents)
