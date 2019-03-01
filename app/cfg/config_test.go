@@ -9,8 +9,7 @@ import (
 
 func TestNewConfig(t *testing.T) {
 	fileLocation := "./tmp/"
-	path, clean := u4go.TempFile(t, fileLocation,"appCfgs-tmp",`
-
+	contents := []byte(`
 zap_log:
   logsPath: ./tmp/
   consoleFileOut: outConsole.logs
@@ -31,10 +30,13 @@ dbs_infos:
     port:	3000
 
 `)
+	path, clean, err := u4go.TempFile(fileLocation,"appCfgs-tmp", contents)
+	assert.NoError(t, err, "Config file should be existed.")
+	assert.NotNil(t, clean, "Loading config file should be success.")
 	defer clean()
 
 	config, err := NewConfig(path)
-	assert.NoError(t, err)
+	assert.NoErrorf(t, err, "Parsing config file should be success with correct contents: %s", contents)
 
 	assert.Equal(t, "./tmp/",config.ZapLog.LogsPath )
 	assert.Equal(t, "outConsole.logs", config.ZapLog.ConsoleFileOut)
@@ -62,16 +64,19 @@ func TestNewConfigReadDataError(t *testing.T) {
 
 func TestNewConfigParseDataError(t *testing.T) {
 	fileLocation := "./tmp/"
-	path, clean := u4go.TempFile(t, fileLocation,"appCfgs-tmp",`
-
-incorrect datas should not be parsed
-
+	contents := []byte(
+`
+	incorrect datas should not be parsed.
 `)
+	path, clean, err := u4go.TempFile(fileLocation,"appCfgs-tmp", contents)
+	assert.NoError(t, err, "Config file should be existed.")
+	assert.NotNil(t, clean, "Loading config file should be success.")
 	defer clean()
 
 	config, err := NewConfig(path)
+	assert.Error(t, err, "Parsing config file should be fail with incorrect contents.")
 
-	assert.Nil(t, config, "Load the incorrect config file:%s expect nil config.", path)
-	assert.NotNil(t, err, "Load the incorrect config file:%s expect non-nil error.", path)
+	assert.Nil(t, config, "Load the incorrect config file:%s expect nil config.", contents)
+	assert.NotNil(t, err, "Load the incorrect config file:%s expect non-nil error.", contents)
 
 }
