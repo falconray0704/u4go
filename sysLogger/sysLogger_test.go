@@ -34,3 +34,12 @@ func TestInit_dev(t *testing.T) {
 	closeRel()
 
 }
+
+func TestSysLoggerDefaultFuncs(t *testing.T) {
+	var err error
+	defaultLogFunc("default log function.")
+	err = defaultSyncFunc()
+	assert.Nil(t, err, "Default sysLogger Sync() expect nil error")
+	err = defaultCloseFunc()
+	assert.Nil(t, err, "Default sysLogger Close() expect nil error")
+}
