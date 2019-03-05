@@ -3,6 +3,7 @@ package sysLogger
 import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"testing"
 )
 
@@ -32,6 +33,26 @@ func TestInit_dev(t *testing.T) {
 	Error("constructed a logger")
 	Sync()
 	closeRel()
+
+}
+
+func TestNewFileSinker(t *testing.T) {
+	var (
+		sinker zapcore.WriteSyncer
+		closer func()
+		err		error
+	)
+	// empty file path
+	sinker, closer, err = NewFileSinker("")
+	assert.Nil(t, sinker, "Empty file path expect nil sinker.")
+	assert.Nil(t, closer, "Empty file path expect nil closer.")
+	assert.NotNil(t, err, "Empty file path expect non-nil error.")
+
+	// unsupport output path
+	sinker, closer, err = NewFileSinker("ftpftp://ftp")
+	assert.Nil(t, sinker, "Unsupported file path expect nil sinker.")
+	assert.Nil(t, closer, "Unsupported file path expect nil closer.")
+	assert.NotNil(t, err, "Unsupported file path expect non-nil error.")
 
 }
 

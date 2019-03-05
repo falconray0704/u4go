@@ -222,7 +222,7 @@ func NewSysLogCore(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logF
 }
 
 // Construct log file sinker
-func NewFileSinker(logFilePath string) (zapcore.WriteSyncer, func(), error) {
+func NewFileSinker(logFilePath string) (sink zapcore.WriteSyncer, close func(), err error) {
 	var (
 		sinker zapcore.WriteSyncer
 		closer func()
@@ -233,6 +233,9 @@ func NewFileSinker(logFilePath string) (zapcore.WriteSyncer, func(), error) {
 		if p := recover(); p != nil {
 			if e, ok := p.(error); ok {
 				multiErr = multierr.Append(multiErr, e)
+				sink = nil
+				close = nil
+				err = multiErr
 			}
 		}
 	}()
