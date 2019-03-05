@@ -2,7 +2,7 @@
 .PHONY: all
 all: outBin docker
 	mkdir -p ./testDataTmp
-	mkdir -p ./logsData
+	mkdir -p ./logDatas
 
 outBin:
 	go build -o $@ .
@@ -10,7 +10,7 @@ outBin:
 .PHONY: test
 test:
 	@echo "Running test..."
-	go test .
+#	go test .
 #	go test -race $(PKGS)
 
 .PHONY: cover
@@ -33,7 +33,7 @@ updatereadme:
 #observer
 .PHONY:docker
 docker: outBin
-	docker rmi -f myapp:falcon
+#	docker rmi -f myapp:falcon
 	docker build --rm -t myapp:falcon \
 				--build-arg "group=${USER}" \
 				--build-arg "gid=$$(id -u)" \
@@ -45,6 +45,7 @@ docker: outBin
 clean:
 	rm -rf outBin
 	rm -rf ./testDataTmp
-	docker rmi -f myapp:falcon
+	rm -rf logDatas
+#	docker rmi -f myapp:falcon
 
 

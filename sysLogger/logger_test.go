@@ -1,4 +1,4 @@
-package u4go
+package sysLogger
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -7,7 +7,7 @@ import (
 
 func TestNewConfigLogger_fail_on_consoleFileOut(t *testing.T) {
 
-	logsLocation := "./logsData/"
+	logsLocation := DefaultLogsLocation
 	consoleFileOut := "ftpftp://log.root"
 	consoleFileErr := logsLocation + "errConsole.logs"
 	jsonFileOut := logsLocation + "outJson.logs"
@@ -21,7 +21,7 @@ func TestNewConfigLogger_fail_on_consoleFileOut(t *testing.T) {
 
 func TestNewConfigLogger_fail_on_consoleFileErr(t *testing.T) {
 
-	logsLocation := "./logsData/"
+	logsLocation := DefaultLogsLocation
 	consoleFileOut := logsLocation + "outConsole.logs"
 	consoleFileErr := "ftpftp://log.root"
 	jsonFileOut := logsLocation + "outJson.logs"
@@ -35,7 +35,7 @@ func TestNewConfigLogger_fail_on_consoleFileErr(t *testing.T) {
 
 func TestNewConfigLogger_fail_on_jsonFileOut(t *testing.T) {
 
-	logsLocation := "./logsData/"
+	logsLocation := DefaultLogsLocation
 	consoleFileOut := logsLocation + "outConsole.logs"
 	consoleFileErr := logsLocation + "errConsole.logs"
 	jsonFileOut := "ftpftp://log.root"
@@ -49,7 +49,7 @@ func TestNewConfigLogger_fail_on_jsonFileOut(t *testing.T) {
 
 func TestNewConfigLogger_fail_on_jsonFileErr(t *testing.T) {
 
-	logsLocation := "./logsData/"
+	logsLocation := DefaultLogsLocation
 	consoleFileOut := logsLocation + "outConsole.logs"
 	consoleFileErr := logsLocation + "errConsole.logs"
 	jsonFileOut := logsLocation + "outJson.logs"
@@ -63,7 +63,7 @@ func TestNewConfigLogger_fail_on_jsonFileErr(t *testing.T) {
 
 func TestNewConfigLogger(t *testing.T) {
 
-	logsLocation := "./logsData/"
+	logsLocation := DefaultLogsLocation
 	consoleFileOut := logsLocation + "outConsole.logs"
 	consoleFileErr := logsLocation + "errConsole.logs"
 	jsonFileOut := logsLocation + "outJson.logs"

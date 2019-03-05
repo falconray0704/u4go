@@ -1,4 +1,4 @@
-package u4go
+package sysLogger
 
 import (
 	"go.uber.org/zap"

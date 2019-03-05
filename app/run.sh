@@ -44,12 +44,12 @@ run_native_cmd_test_func()
 
 run_docker_func()
 {
-    docker run --rm -v $(pwd)/logsData:/myApp/logsData myapp:falcon
+    docker run --rm -v $(pwd)/logDatas:/myApp/logDatas myapp:falcon
 }
 
 run_clean_docker_datas_func()
 {
-    rm -rf logsData/*
+    rm -rf logDatas/*
 }
 
 usage()
@@ -66,7 +66,7 @@ usage()
 
 [ $# -lt 1 ] && usage && exit
 
-mkdir -p ./logsData
+mkdir -p ./logDatas
 
 case $1 in
     lc) echo "Run native..."

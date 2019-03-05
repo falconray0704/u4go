@@ -1,5 +1,6 @@
 
 PKGS ?= github.com/falconray0704/u4go \
+		github.com/falconray0704/u4go/sysLogger \
 		github.com/falconray0704/u4go/app/cfg \
 		github.com/falconray0704/u4go/internal/ioutils
 
@@ -27,13 +28,14 @@ dependencies:
 
 .PHONY: env
 env:
-	rm -rf ./logsData
-	mkdir -p ./logsData
+	rm -rf ./logDatas
+	mkdir -p ./logDatas
+	mkdir -p ./sysLogger/logDatas
 	mkdir -p ./tmp
 	mkdir -p ./app/cfg/tmp
-#	echo "" > ./logsData/log.root
-#	$$(sudo chown root:root ./logsData/log.root)
-#	$$(sudo chmod a-w ./logsData/log.root)
+#	echo "" > ./logDatas/log.root
+#	$$(sudo chown root:root ./logDatas/log.root)
+#	$$(sudo chmod a-w ./logDatas/log.root)
 
 .PHONY: test
 test: env
@@ -60,7 +62,8 @@ bench:
 clean:
 	rm -rf ./tmp
 	rm -rf ./app/cfg/tmp
-	rm -rf ./logsData
+	rm -rf ./logDatas
+	rm -rf ./sysLogger/logDatas
 	rm -rf ./cover.out
 	rm -rf ./cover.html
 	go clean -cache $(PKGS)

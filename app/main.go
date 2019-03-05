@@ -1,12 +1,9 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"github.com/falconray0704/u4go"
-	"github.com/falconray0704/u4go/app/cfg"
-	"go.uber.org/zap"
-	"log"
+	slog "github.com/falconray0704/u4go/sysLogger"
+	"os"
 )
 
 /*
@@ -148,17 +145,41 @@ func demoGetCommandLineArgs(sysCfg *cfg.Config) {
 	}
 }
 
-*/
 
 func demoAdvancedConfigurations(logger *zap.Logger) {
 
-	logger.Info("constructed a logger")
-	logger.Info("constructed a logger 2")
-	logger.Warn("constructed a logger")
-	logger.Warn("constructed a logger 2")
-	logger.Error("constructed a logger")
-	logger.Error("constructed a logger 2")
+	ymlPtr := flag.String("c", "./sysDatas/cfgs/appCfgs.yaml", "yaml file to read config from")
+	flag.Parse()
+	sysCfg, err := cfg.NewConfig(*ymlPtr)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	logsLocation := sysCfg.ZapLog.LogsPath
+	consoleFileOut := logsLocation + "outConsole.logs"
+	consoleFileErr := logsLocation + "errConsole.logs"
+	jsonFileOut := logsLocation + "outJson.logs"
+	jsonFileErr := logsLocation + "errJson.logs"
+	logger, closers, err := slog.NewConfigLogger(consoleFileOut, consoleFileErr, jsonFileOut, jsonFileErr)
+
+	if err != nil {
+		fmt.Errorf("Error:%v", err)
+	}
+	defer func() {
+		for _, cf := range closers {
+			cf()
+		}
+	}()
+
+	slog.Info("constructed a logger")
+	slog.Info("constructed a logger 2")
+	slog.Warn("constructed a logger")
+	slog.Warn("constructed a logger 2")
+	slog.Error("constructed a logger")
+	slog.Error("constructed a logger 2")
 }
+*/
 
 func main() {
 	/*
@@ -177,30 +198,22 @@ func main() {
 	*/
 	//demoGetCommandLineArgs(sysCfg)
 
-	ymlPtr := flag.String("c", "./sysDatas/cfgs/appCfgs.yaml", "yaml file to read config from")
-	flag.Parse()
-	sysCfg, err := cfg.NewConfig(*ymlPtr)
+	_, logClose, err := slog.Init(true)
 
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Printf("Init system logger fail: %s.\n", err.Error())
+		os.Exit(1)
 	}
 
-	logsLocation := sysCfg.ZapLog.LogsPath
-	consoleFileOut := logsLocation + "outConsole.logs"
-	consoleFileErr := logsLocation + "errConsole.logs"
-	jsonFileOut := logsLocation + "outJson.logs"
-	jsonFileErr := logsLocation + "errJson.logs"
-	logger, closers, err := u4go.NewConfigLogger(consoleFileOut, consoleFileErr, jsonFileOut, jsonFileErr)
-
-	if err != nil {
-		fmt.Errorf("Error:%v", err)
-	}
 	defer func() {
-		for _, cf := range closers {
-			cf()
-		}
+		logClose()
 	}()
 
-	demoAdvancedConfigurations(logger)
+	slog.Debug("constructed a logger")
+	slog.Info("constructed a logger")
+	slog.Warn("constructed a logger")
+	slog.Error("constructed a logger")
+
+	defer slog.Close()
 
 }

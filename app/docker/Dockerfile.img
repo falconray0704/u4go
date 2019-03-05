@@ -5,11 +5,22 @@ ARG uid
 ARG group
 ARG gid
 
+ENV DEMO_VERSION 7.2.0
+ENV VERSION=1.0 DEBUG=on \
+    NAME="Hello world"
+
+VOLUME /myApp/logDatas
+
+EXPOSE 443 80
 
 RUN groupadd -r "$group" -g "$gid" && useradd -r -u "$uid" -g "$gid" "$user"
 
+WORKDIR /myApp
+ENTRYPOINT ["/myApp/outBin"]
+CMD ["$HOME", "$PWD", "a1", "a2", "looping"]
+
 RUN mkdir -p /myApp/tmp \
-    && mkdir -p /myApp/logsData \
+    && mkdir -p /myApp/logDatas \
     && mkdir -p /myApp/sysDatas/cfgs
 
 COPY ./outBin /myApp/
@@ -18,18 +29,7 @@ COPY ./sysDatas/cfgs/appCfgs.yaml /myApp/sysDatas/cfgs/
 
 RUN chown -R $user:$group /myApp
 
-ENV DEMO_VERSION 7.2.0
-ENV VERSION=1.0 DEBUG=on \
-    NAME="Hello world"
-
-VOLUME /myApp/logsData
-
-EXPOSE 443 80
-
 USER $user
 
-WORKDIR /myApp
-ENTRYPOINT ["/myApp/outBin"]
-CMD ["$HOME", "$PWD", "a1", "a2", "looping"]
 
 
