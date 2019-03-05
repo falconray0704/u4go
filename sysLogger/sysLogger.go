@@ -82,7 +82,7 @@ func Init(isDevMode bool) (logger *zap.Logger, closeLogger func() error, err err
 	sysLogger.CurrentLogLevel = sysLogLevel
 	sysLogger.ZapLogger = zap.New(sysLogTeeCore)
 
-	Log = sysLogger.ZapLogger.WithOptions()
+	Log = sysLogger.ZapLogger
 
 	Debug = sysLogger.ZapLogger.Debug
 	Info = sysLogger.ZapLogger.Info

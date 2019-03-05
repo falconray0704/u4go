@@ -35,6 +35,11 @@ func TestInit_dev(t *testing.T) {
 
 }
 
+func TestNewSysLogLevelFail(t *testing.T) {
+	l := NewSysLogLevel("abcd")
+	assert.NotNil(t, l, "Unknown level expect fallback to non-nil debug level.")
+}
+
 func TestSysLoggerDefaultFuncs(t *testing.T) {
 	var err error
 	defaultLogFunc("default log function.")
