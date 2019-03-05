@@ -36,6 +36,33 @@ func TestInit_dev(t *testing.T) {
 
 }
 
+func TestNewSysLogCore(t *testing.T) {
+
+	var (
+		core zapcore.Core
+		close func()
+		err error
+	)
+
+	l := NewSysLogLevel("debug")
+
+	core, close, err = NewSysLogCore(true, false, l, STDERR)
+	assert.NotNil(t, core, "stderr output expect non-nil core.")
+	assert.Nil(t, close, "stderr output expect nil close().")
+	assert.Nil(t, err, "stderr output expect nil error.")
+
+	core, close, err = NewSysLogCore(true, false, l, STDOUT)
+	assert.NotNil(t, core, "stdout output expect non-nil core.")
+	assert.Nil(t, close, "stdout output expect nil close().")
+	assert.Nil(t, err, "stdout output expect nil error.")
+
+	core, close, err = NewSysLogCore(true, false, l, "ftpftp://ftp")
+	assert.Nil(t, core, "unsupported output expect nil core.")
+	assert.Nil(t, close, "unsupported output expect nil close().")
+	assert.NotNil(t, err, "unsupported output expect non-nil error.")
+
+}
+
 func TestNewFileSinker(t *testing.T) {
 	var (
 		sinker zapcore.WriteSyncer
