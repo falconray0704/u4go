@@ -92,6 +92,7 @@ func Init(isDevMode bool) (logger *zap.Logger, closeLogger func() error, err err
 	Panic = sysLogger.ZapLogger.Panic
 	Fatal = sysLogger.ZapLogger.Fatal
 	Sync = sysLogger.ZapLogger.Sync
+
 	Close = func() error {
 		sysLogCloser()
 		return nil
@@ -110,7 +111,12 @@ type SysLogConfig struct {
 
 	LogsLocation string		`yaml:"logsLocation"` // logs storage location , must end with "\" or "/" which depend on OS
 	LogFilePrefix string 	`yaml:"logFilePrefix"` // prefix of log files
+	ConsoleOutput string	`yaml:"consoleOutput"` // only support "stdout" or "stderr"
+
+	BuileCore	CoreBuilder
 }
+
+type CoreBuilder func(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error)
 
 func NewRelSysLogConfigDefault() *SysLogConfig  {
 	return &SysLogConfig{
@@ -120,7 +126,9 @@ func NewRelSysLogConfigDefault() *SysLogConfig  {
 		EnableConsoleFile: true,
 		EnalbeJsonFile: true,
 		LogsLocation: DefaultLogsLocation,
-		LogFilePrefix: "rel" }
+		LogFilePrefix: "rel",
+		ConsoleOutput: STDERR,
+		BuileCore: NewSysLogCore}
 }
 
 func NewDevSysLogConfigDefault() *SysLogConfig  {
@@ -131,7 +139,9 @@ func NewDevSysLogConfigDefault() *SysLogConfig  {
 		EnableConsoleFile: true,
 		EnalbeJsonFile: true,
 		LogsLocation: DefaultLogsLocation,
-		LogFilePrefix: "dev" }
+		LogFilePrefix: "dev",
+		ConsoleOutput: STDERR,
+		BuileCore: NewSysLogCore}
 }
 
 func (this *SysLogConfig) NewSysLogTeeCore() (zap.AtomicLevel, zapcore.Core, func(), error) {
@@ -142,13 +152,14 @@ func (this *SysLogConfig) NewSysLogTeeCore() (zap.AtomicLevel, zapcore.Core, fun
 		coreConsoleFile zapcore.Core
 		coreJsonFile	zapcore.Core
 
-		closers			[]func()
+		coreClose		func()
+		closers			= []func(){}
 		cores			[]zapcore.Core
 
 		logLevel		zap.AtomicLevel
 	)
 
-	closer := func() {
+	closerHub := func() {
 		for _, cls := range closers {
 			cls()
 		}
@@ -156,46 +167,45 @@ func (this *SysLogConfig) NewSysLogTeeCore() (zap.AtomicLevel, zapcore.Core, fun
 
 	defer func() {
 		if multiErr != nil {
-			closer()
+			closerHub()
 		}
 	}()
 
 	logLevel = NewSysLogLevel(this.LogLevel)
 
 	if this.EnableConsole {
-		coreConsole, closer, errOnce = NewSysLogCore(this.IsDevMode, false, logLevel, STDERR)
+		coreConsole, coreClose, errOnce = this.BuileCore(this.IsDevMode, false, logLevel, this.ConsoleOutput)
 		if errOnce != nil {
 			multiErr = multierr.Append(multiErr, errOnce)
 			return logLevel, nil, nil, multiErr
 		} else {
-			closers = append(closers, closer)
 			cores = append(cores, coreConsole)
 		}
 	}
 
 	if this.EnableConsoleFile {
-		coreConsoleFile, closer, errOnce = NewSysLogCore(this.IsDevMode, false, logLevel, this.LogsLocation + this.LogFilePrefix + "Console.log")
+		coreConsoleFile, coreClose, errOnce = this.BuileCore(this.IsDevMode, false, logLevel, this.LogsLocation + this.LogFilePrefix + "Console.log")
 		if errOnce != nil {
 			multiErr = multierr.Append(multiErr, errOnce)
 			return logLevel, nil, nil, multiErr
 		} else {
-			closers = append(closers, closer)
+			closers = append(closers, coreClose)
 			cores = append(cores, coreConsoleFile)
 		}
 	}
 
 	if this.EnalbeJsonFile {
-		coreJsonFile, closer, errOnce = NewSysLogCore(this.IsDevMode, true, logLevel, this.LogsLocation + this.LogFilePrefix + "Json.log")
+		coreJsonFile, coreClose, errOnce = this.BuileCore(this.IsDevMode, true, logLevel, this.LogsLocation + this.LogFilePrefix + "Json.log")
 		if errOnce != nil {
 			multiErr = multierr.Append(multiErr, errOnce)
 			return logLevel, nil, nil, multiErr
 		} else {
-			closers = append(closers, closer)
+			closers = append(closers, coreClose)
 			cores = append(cores, coreJsonFile)
 		}
 	}
 
-	return logLevel,zapcore.NewTee(cores ...), closer, nil
+	return logLevel,zapcore.NewTee(cores ...), closerHub, nil
 }
 
 func NewSysLogCore(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error) {

@@ -1,9 +1,11 @@
 package sysLogger
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"strings"
 	"testing"
 )
 
@@ -34,6 +36,61 @@ func TestInit_dev(t *testing.T) {
 	Sync()
 	closeRel()
 
+}
+
+func TestSysLogConfig_NewSysLogTeeCore(t *testing.T) {
+	var (
+		sysCfg *SysLogConfig
+
+		core zapcore.Core
+		close func()
+		err error
+	)
+
+	sysCfg = NewDevSysLogConfigDefault()
+	sysCfg.BuileCore = newSysLogCore_STDERR_err
+	_, core, close, err = sysCfg.NewSysLogTeeCore()
+	assert.Nil(t, core, "Mocking stderr fail expect nil zapcore.Core return.")
+	assert.Nil(t, close, "Mocking stderr fail expect nil close() return.")
+	assert.NotNil(t, err, "Mocking stderr fail expect non-nil err return.")
+
+	sysCfg = NewDevSysLogConfigDefault()
+	sysCfg.BuileCore = newSysLogCore_STDOUT_err
+	sysCfg.ConsoleOutput = STDOUT
+	_, core, close, err = sysCfg.NewSysLogTeeCore()
+	assert.Nil(t, core, "Mocking stdout fail expect nil zapcore.Core return.")
+	assert.Nil(t, close, "Mocking stdout fail expect nil close() return.")
+	assert.NotNil(t, err, "Mocking stdout fail expect non-nil err return.")
+
+	sysCfg = NewDevSysLogConfigDefault()
+	sysCfg.LogsLocation = ""
+	sysCfg.LogFilePrefix = "ftpftp://ftp"
+	sysCfg.BuileCore = newSysLogCore_unsupported_output_err
+	_, core, close, err = sysCfg.NewSysLogTeeCore()
+	assert.Nil(t, core, "Mocking stdout fail expect nil zapcore.Core return.")
+	assert.Nil(t, close, "Mocking stdout fail expect nil close() return.")
+	assert.NotNil(t, err, "Mocking stdout fail expect non-nil err return.")
+}
+
+func newSysLogCore_unsupported_output_err(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error) {
+	if strings.Contains(logFilePath, "ftpftp") {
+		return nil, nil, errors.New("mocking unsupported output error from newSysLogCoreErr()")
+	}
+	return NewSysLogCore(isDevMode, isJsonEncoder, logLevel, logFilePath)
+}
+
+func newSysLogCore_STDOUT_err(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error) {
+	if logFilePath == STDOUT {
+		return nil, nil, errors.New("mocking logFilePath == STDOUT error from newSysLogCoreErr()")
+	}
+	return NewSysLogCore(isDevMode, isJsonEncoder, logLevel, logFilePath)
+}
+
+func newSysLogCore_STDERR_err(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error) {
+	if logFilePath == STDERR {
+		return nil, nil, errors.New("mocking logFilePath == STDERR error from newSysLogCoreErr()")
+	}
+	return NewSysLogCore(isDevMode, isJsonEncoder, logLevel, logFilePath)
 }
 
 func TestNewSysLogCore(t *testing.T) {
