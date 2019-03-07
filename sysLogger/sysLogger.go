@@ -308,6 +308,12 @@ func NewSysLogLevel(logLevelStr string) zap.AtomicLevel {
 	return logLevel
 }
 
+func SetCurrentLevel(levelStr string) error {
+	return sysLogger.CurrentLogLevel.UnmarshalText([]byte(levelStr))
+}
 
+func GetCurrentLevel() string {
+	return sysLogger.CurrentLogLevel.String()
+}
 
 

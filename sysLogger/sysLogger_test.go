@@ -262,3 +262,57 @@ func TestSysLoggerDefaultFuncs(t *testing.T) {
 	err = defaultCloseFunc()
 	assert.Nil(t, err, "Default sysLogger Close() expect nil error")
 }
+
+func TestGetCurrentLevel(t *testing.T) {
+	var (
+		logger *zap.Logger
+		close func() error
+		err error
+	)
+	logger, close, err = Init(true)
+	assert.NotNil(t, logger, "Init devMode logger expect non-nil logger.")
+	assert.NotNil(t, close, "Init devMode logger expect non-nil close().")
+	assert.Nil(t, err, "Init devMode logger expect nil error.")
+	assert.Equal(t, "debug", GetCurrentLevel(), "Dev mode expect level string == debug")
+	Sync()
+	Close()
+
+	logger, close, err = Init(false)
+	assert.NotNil(t, logger, "Init relMode logger expect non-nil logger.")
+	assert.NotNil(t, close, "Init relMode logger expect non-nil close().")
+	assert.Nil(t, err, "Init relMode logger expect nil error.")
+	assert.Equal(t, "info", GetCurrentLevel(), "Rel mode expect level string == info")
+	Sync()
+	Close()
+
+}
+
+func TestSetCurrentLevel(t *testing.T) {
+	var (
+		logger *zap.Logger
+		close func() error
+		err error
+	)
+	logger, close, err = Init(true)
+	assert.NotNil(t, logger, "Init devMode logger expect non-nil logger.")
+	assert.NotNil(t, close, "Init devMode logger expect non-nil close().")
+	assert.Nil(t, err, "Init devMode logger expect nil error.")
+	assert.NoError(t, SetCurrentLevel("debug"), "Set logger debug level expect no error")
+	assert.NoError(t, SetCurrentLevel("info"), "Set logger info level expect no error")
+	Sync()
+	Close()
+
+	logger, close, err = Init(false)
+	assert.NotNil(t, logger, "Init relMode logger expect non-nil logger.")
+	assert.NotNil(t, close, "Init relMode logger expect non-nil close().")
+	assert.Nil(t, err, "Init relMode logger expect nil error.")
+	assert.NoError(t, SetCurrentLevel("debug"), "Set logger debug level expect no error")
+	assert.NoError(t, SetCurrentLevel("info"), "Set logger info level expect no error")
+	Sync()
+	Close()
+
+}
+
+
+
+
