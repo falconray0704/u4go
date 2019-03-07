@@ -46,6 +46,8 @@ func TestInit(t *testing.T) {
 
 }
 
+
+
 type StubbedTeeCoreBuilderError struct {
 	retLogger *zap.Logger
 	retClose func() error
@@ -68,7 +70,7 @@ func StubTeeCoreBuilderError() *StubbedTeeCoreBuilderError {
 }
 
 func (st *StubbedTeeCoreBuilderError) UnstubTeeCoreBuilderError() {
-	teeCoreBuilder = st.teeCoreBuilder
+	teeCoreBuilder = st.pre
 }
 
 func (st *StubbedTeeCoreBuilderError) teeCoreBuilder(cfg *SysLogConfig) (zap.AtomicLevel, zapcore.Core, func(), error) {
@@ -78,45 +80,101 @@ func (st *StubbedTeeCoreBuilderError) teeCoreBuilder(cfg *SysLogConfig) (zap.Ato
 
 func TestSysLogConfig_NewSysLogTeeCore(t *testing.T) {
 	var (
-		sysCfg *SysLogConfig
-
-		core zapcore.Core
-		close func()
-		err error
+		st *StubbedCoreBuilderError
 	)
 
-	sysCfg = NewDevSysLogConfigDefault()
-	sysCfg.buildCore = newSysLogCore_STDERR_err
-	_, core, close, err = sysCfg.buildTeeCore(sysCfg)
-	assert.Nil(t, core, "Mocking stderr fail expect nil zapcore.Core return.")
-	assert.Nil(t, close, "Mocking stderr fail expect nil close() return.")
-	assert.NotNil(t, err, "Mocking stderr fail expect non-nil err return.")
+	st = WithStubCoreBuilderErrorSTDERR(NewSysLogTeeCore)
+	assert.Nil(t, st.retCore, "Mocking stderr fail expect nil zapcore.Core return.")
+	assert.Nil(t, st.retClose, "Mocking stderr fail expect nil close() return.")
+	assert.NotNil(t, st.retErr, "Mocking stderr fail expect non-nil err return.")
 
-	sysCfg = NewDevSysLogConfigDefault()
-	sysCfg.buildCore = newSysLogCore_STDOUT_err
-	sysCfg.ConsoleOutput = STDOUT
-	_, core, close, err = sysCfg.buildTeeCore(sysCfg)
-	assert.Nil(t, core, "Mocking stdout fail expect nil zapcore.Core return.")
-	assert.Nil(t, close, "Mocking stdout fail expect nil close() return.")
-	assert.NotNil(t, err, "Mocking stdout fail expect non-nil err return.")
+	st = WithStubCoreBuilderErrorSTDOUT(NewSysLogTeeCore)
+	assert.Nil(t, st.retCore, "Mocking stdout fail expect nil zapcore.Core return.")
+	assert.Nil(t, st.retClose, "Mocking stdout fail expect nil close() return.")
+	assert.NotNil(t, st.retErr, "Mocking stdout fail expect non-nil err return.")
 
-	sysCfg = NewDevSysLogConfigDefault()
-	sysCfg.LogsLocation = ""
-	sysCfg.LogFilePrefix = "ftpftp://ftp"
-	sysCfg.buildCore = newSysLogCore_unsupported_output_err
-	_, core, close, err = sysCfg.buildTeeCore(sysCfg)
-	assert.Nil(t, core, "Mocking unsupported output file fail expect nil zapcore.Core return.")
-	assert.Nil(t, close, "Mocking unsupported output file fail expect nil close() return.")
-	assert.NotNil(t, err, "Mocking unsupported output file fail expect non-nil err return.")
+	st = WithStubCoreBuilderErrorUnsupportedOutput(NewSysLogTeeCore)
+	assert.Nil(t, st.retCore, "Mocking unsupported output file fail expect nil zapcore.Core return.")
+	assert.Nil(t, st.retClose, "Mocking unsupported output file fail expect nil close() return.")
+	assert.NotNil(t, st.retErr, "Mocking unsupported output file fail expect non-nil err return.")
 
-	sysCfg = NewDevSysLogConfigDefault()
-	sysCfg.LogsLocation = ""
-	sysCfg.LogFilePrefix = "ftpftp://ftp"
-	sysCfg.buildCore = newSysLogCore_unsupported_Json_err
-	_, core, close, err = sysCfg.buildTeeCore(sysCfg)
-	assert.Nil(t, core, "Mocking unsupported output Json fail expect nil zapcore.Core return.")
-	assert.Nil(t, close, "Mocking unsupported output Json fail expect nil close() return.")
-	assert.NotNil(t, err, "Mocking unsupported output Json fail expect non-nil err return.")
+	st = WithStubCoreBuilderErrorUnsupportedJson(NewSysLogTeeCore)
+	assert.Nil(t, st.retCore, "Mocking unsupported output Json fail expect nil zapcore.Core return.")
+	assert.Nil(t, st.retClose, "Mocking unsupported output Json fail expect nil close() return.")
+	assert.NotNil(t, st.retErr, "Mocking unsupported output Json fail expect non-nil err return.")
+}
+
+type StubbedCoreBuilderError struct {
+	retCore zapcore.Core
+	retClose func()
+	retErr error
+
+	pre		CoreBuilder
+}
+
+func WithStubCoreBuilderErrorUnsupportedOutput(buildTeeCore TeeCoreBuilder) *StubbedCoreBuilderError {
+	st := StubCoreBuilderErrorUnsupportedOutput()
+	defer st.UnstubCoreBuilderError()
+	cfg := NewDevSysLogConfigDefault()
+	cfg.LogsLocation = ""
+	cfg.LogFilePrefix = "ftpftp://ftp"
+	_, st.retCore, st.retClose, st.retErr = buildTeeCore(cfg)
+	return st
+}
+
+func StubCoreBuilderErrorUnsupportedOutput() *StubbedCoreBuilderError {
+	s := &StubbedCoreBuilderError{pre: coreBuilder}
+	coreBuilder = newSysLogCore_unsupported_output_err
+	return s
+}
+
+func WithStubCoreBuilderErrorUnsupportedJson(buildTeeCore TeeCoreBuilder) *StubbedCoreBuilderError {
+	st := StubCoreBuilderErrorUnsupportedJson()
+	defer st.UnstubCoreBuilderError()
+	cfg := NewDevSysLogConfigDefault()
+	cfg.LogsLocation = ""
+	cfg.LogFilePrefix = "ftpftp://ftp"
+	_, st.retCore, st.retClose, st.retErr = buildTeeCore(cfg)
+	return st
+}
+
+func StubCoreBuilderErrorUnsupportedJson() *StubbedCoreBuilderError {
+	s := &StubbedCoreBuilderError{pre: coreBuilder}
+	coreBuilder = newSysLogCore_unsupported_Json_err
+	return s
+}
+
+func WithStubCoreBuilderErrorSTDOUT(buildTeeCore TeeCoreBuilder) *StubbedCoreBuilderError {
+	st := StubCoreBuilderErrorSTDOUT()
+	defer st.UnstubCoreBuilderError()
+	cfg := NewDevSysLogConfigDefault()
+	cfg.ConsoleOutput = STDOUT
+	_, st.retCore, st.retClose, st.retErr = buildTeeCore(cfg)
+	return st
+}
+
+func StubCoreBuilderErrorSTDOUT() *StubbedCoreBuilderError {
+	s := &StubbedCoreBuilderError{pre: coreBuilder}
+	coreBuilder = newSysLogCore_STDOUT_err
+	return s
+}
+
+func WithStubCoreBuilderErrorSTDERR(buildTeeCore TeeCoreBuilder) *StubbedCoreBuilderError {
+	st := StubCoreBuilderErrorSTDERR()
+	defer st.UnstubCoreBuilderError()
+	cfg := NewDevSysLogConfigDefault()
+	_, st.retCore, st.retClose, st.retErr = buildTeeCore(cfg)
+	return st
+}
+
+func StubCoreBuilderErrorSTDERR() *StubbedCoreBuilderError {
+	s := &StubbedCoreBuilderError{pre: coreBuilder}
+	coreBuilder = newSysLogCore_STDERR_err
+	return s
+}
+
+func (st *StubbedCoreBuilderError) UnstubCoreBuilderError() {
+	coreBuilder = st.pre
 }
 
 func newSysLogCore_unsupported_Json_err(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error) {

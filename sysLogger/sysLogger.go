@@ -22,8 +22,8 @@ type TeeCoreBuilder func(cfg *SysLogConfig) (zap.AtomicLevel, zapcore.Core, func
 type CoreBuilder func(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error)
 
 var (
-	coreBuilder = NewSysLogCore
-	teeCoreBuilder = NewSysLogTeeCore
+	coreBuilder CoreBuilder = NewSysLogCore
+	teeCoreBuilder TeeCoreBuilder = NewSysLogTeeCore
 	Debug	LogFieldsFunc = defaultLogFunc
 	Info	LogFieldsFunc = defaultLogFunc
 	Warn	LogFieldsFunc = defaultLogFunc
