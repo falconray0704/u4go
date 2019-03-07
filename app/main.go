@@ -198,22 +198,19 @@ func main() {
 	*/
 	//demoGetCommandLineArgs(sysCfg)
 
-	_, logClose, err := slog.Init(true)
-
+	_, _, err := slog.Init(true)
 	if err != nil {
 		fmt.Printf("Init system logger fail: %s.\n", err.Error())
 		os.Exit(1)
 	}
-
 	defer func() {
-		logClose()
+		slog.Sync()
+		slog.Close()
 	}()
 
 	slog.Debug("constructed a logger")
 	slog.Info("constructed a logger")
 	slog.Warn("constructed a logger")
 	slog.Error("constructed a logger")
-
-	defer slog.Close()
 
 }
