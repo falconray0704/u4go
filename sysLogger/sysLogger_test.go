@@ -116,7 +116,6 @@ func WithStubCoreBuilderErrorUnsupportedOutput(buildTeeCore TeeCoreBuilder) *Stu
 	st := StubCoreBuilderErrorUnsupportedOutput()
 	defer st.UnstubCoreBuilderError()
 	cfg := NewDevSysLogConfigDefault()
-	cfg.LogsLocation = ""
 	cfg.LogFilePrefix = "ftpftp://ftp"
 	_, st.retCore, st.retClose, st.retErr = buildTeeCore(cfg)
 	return st
@@ -132,8 +131,6 @@ func WithStubCoreBuilderErrorUnsupportedJson(buildTeeCore TeeCoreBuilder) *Stubb
 	st := StubCoreBuilderErrorUnsupportedJson()
 	defer st.UnstubCoreBuilderError()
 	cfg := NewDevSysLogConfigDefault()
-	cfg.LogsLocation = ""
-	cfg.LogFilePrefix = "ftpftp://ftp"
 	_, st.retCore, st.retClose, st.retErr = buildTeeCore(cfg)
 	return st
 }
