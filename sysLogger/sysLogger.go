@@ -16,9 +16,14 @@ const (
 	DefaultLogsLocation = "./logDatas/"
 )
 
+type InitFunc func(isDevMode bool) (logger *zap.Logger, closeLogger func() error, err error)
 type LogFieldsFunc func(msg string, fields ...zap.Field)
+type TeeCoreBuilder func(cfg *SysLogConfig) (zap.AtomicLevel, zapcore.Core, func(), error)
+type CoreBuilder func(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error)
 
 var (
+	coreBuilder = NewSysLogCore
+	teeCoreBuilder = NewSysLogTeeCore
 	Debug	LogFieldsFunc = defaultLogFunc
 	Info	LogFieldsFunc = defaultLogFunc
 	Warn	LogFieldsFunc = defaultLogFunc
@@ -31,6 +36,7 @@ var (
 
 	sysLogger *SysLogger
 	Log *zap.Logger
+
 )
 
 func defaultLogFunc(msg string, fields ...zap.Field) {
@@ -74,7 +80,7 @@ func Init(isDevMode bool) (logger *zap.Logger, closeLogger func() error, err err
 		sysLogCfg = NewDevSysLogConfigDefault()
 	}
 
-	if sysLogLevel, sysLogTeeCore, sysLogCloser, errOnce = sysLogCfg.NewSysLogTeeCore(); errOnce != nil  {
+	if sysLogLevel, sysLogTeeCore, sysLogCloser, errOnce = sysLogCfg.buildTeeCore(sysLogCfg); errOnce != nil  {
 		return nil, nil, errOnce
 	}
 
@@ -113,10 +119,9 @@ type SysLogConfig struct {
 	LogFilePrefix string 	`yaml:"logFilePrefix"` // prefix of log files
 	ConsoleOutput string	`yaml:"consoleOutput"` // only support "stdout" or "stderr"
 
-	BuileCore	CoreBuilder
+	buildCore	CoreBuilder
+	buildTeeCore TeeCoreBuilder
 }
-
-type CoreBuilder func(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error)
 
 func NewRelSysLogConfigDefault() *SysLogConfig  {
 	return &SysLogConfig{
@@ -128,7 +133,8 @@ func NewRelSysLogConfigDefault() *SysLogConfig  {
 		LogsLocation: DefaultLogsLocation,
 		LogFilePrefix: "rel",
 		ConsoleOutput: STDERR,
-		BuileCore: NewSysLogCore}
+		buildCore: coreBuilder,
+		buildTeeCore: teeCoreBuilder}
 }
 
 func NewDevSysLogConfigDefault() *SysLogConfig  {
@@ -141,10 +147,11 @@ func NewDevSysLogConfigDefault() *SysLogConfig  {
 		LogsLocation: DefaultLogsLocation,
 		LogFilePrefix: "dev",
 		ConsoleOutput: STDERR,
-		BuileCore: NewSysLogCore}
+		buildCore: coreBuilder,
+		buildTeeCore: teeCoreBuilder}
 }
 
-func (this *SysLogConfig) NewSysLogTeeCore() (zap.AtomicLevel, zapcore.Core, func(), error) {
+func NewSysLogTeeCore(cfg *SysLogConfig) (zap.AtomicLevel, zapcore.Core, func(), error) {
 	var (
 		errOnce, multiErr error
 
@@ -171,10 +178,10 @@ func (this *SysLogConfig) NewSysLogTeeCore() (zap.AtomicLevel, zapcore.Core, fun
 		}
 	}()
 
-	logLevel = NewSysLogLevel(this.LogLevel)
+	logLevel = NewSysLogLevel(cfg.LogLevel)
 
-	if this.EnableConsole {
-		coreConsole, coreClose, errOnce = this.BuileCore(this.IsDevMode, false, logLevel, this.ConsoleOutput)
+	if cfg.EnableConsole {
+		coreConsole, coreClose, errOnce = cfg.buildCore(cfg.IsDevMode, false, logLevel, cfg.ConsoleOutput)
 		if errOnce != nil {
 			multiErr = multierr.Append(multiErr, errOnce)
 			return logLevel, nil, nil, multiErr
@@ -183,8 +190,8 @@ func (this *SysLogConfig) NewSysLogTeeCore() (zap.AtomicLevel, zapcore.Core, fun
 		}
 	}
 
-	if this.EnableConsoleFile {
-		coreConsoleFile, coreClose, errOnce = this.BuileCore(this.IsDevMode, false, logLevel, this.LogsLocation + this.LogFilePrefix + "Console.log")
+	if cfg.EnableConsoleFile {
+		coreConsoleFile, coreClose, errOnce = cfg.buildCore(cfg.IsDevMode, false, logLevel, cfg.LogsLocation + cfg.LogFilePrefix + "Console.log")
 		if errOnce != nil {
 			multiErr = multierr.Append(multiErr, errOnce)
 			return logLevel, nil, nil, multiErr
@@ -194,8 +201,8 @@ func (this *SysLogConfig) NewSysLogTeeCore() (zap.AtomicLevel, zapcore.Core, fun
 		}
 	}
 
-	if this.EnalbeJsonFile {
-		coreJsonFile, coreClose, errOnce = this.BuileCore(this.IsDevMode, true, logLevel, this.LogsLocation + this.LogFilePrefix + "Json.log")
+	if cfg.EnalbeJsonFile {
+		coreJsonFile, coreClose, errOnce = cfg.buildCore(cfg.IsDevMode, true, logLevel, cfg.LogsLocation + cfg.LogFilePrefix + "Json.log")
 		if errOnce != nil {
 			multiErr = multierr.Append(multiErr, errOnce)
 			return logLevel, nil, nil, multiErr
