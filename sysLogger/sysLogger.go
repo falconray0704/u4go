@@ -107,6 +107,43 @@ func Init(isDevMode bool) (logger *zap.Logger, closeLogger func() error, err err
 	return Log, Close, nil
 }
 
+func (cfg *SysLogConfig) Init() (logger *zap.Logger, closeLogger func() error, err error) {
+	var (
+		//sysLogCfg *SysLogConfig
+		sysLogLevel zap.AtomicLevel
+		sysLogTeeCore zapcore.Core
+		sysLogCloser func()
+
+		errOnce error
+	)
+
+	if sysLogLevel, sysLogTeeCore, sysLogCloser, errOnce = cfg.buildTeeCore(cfg); errOnce != nil  {
+		return nil, nil, errOnce
+	}
+
+	sysLogger.SysLogCfg = cfg
+	sysLogger.CurrentLogLevel = sysLogLevel
+	sysLogger.ZapLogger = zap.New(sysLogTeeCore)
+
+	Log = sysLogger.ZapLogger
+
+	Debug = sysLogger.ZapLogger.Debug
+	Info = sysLogger.ZapLogger.Info
+	Warn = sysLogger.ZapLogger.Warn
+	Error = sysLogger.ZapLogger.Error
+	DPanic = sysLogger.ZapLogger.DPanic
+	Panic = sysLogger.ZapLogger.Panic
+	Fatal = sysLogger.ZapLogger.Fatal
+	Sync = sysLogger.ZapLogger.Sync
+
+	Close = func() error {
+		sysLogCloser()
+		return nil
+	}
+
+	return Log, Close, nil
+}
+
 type SysLogConfig struct {
 	IsDevMode bool 			`yaml:"isDevMode"`
 	LogLevel string			`yaml:"logLevel"`
@@ -121,6 +158,20 @@ type SysLogConfig struct {
 
 	buildCore	CoreBuilder
 	buildTeeCore TeeCoreBuilder
+}
+
+func NewSysLogCfg() *SysLogConfig  {
+	return &SysLogConfig{
+		IsDevMode: true,
+		LogLevel: "info",
+		EnableConsole: true,
+		EnableConsoleFile: true,
+		EnalbeJsonFile: false,
+		LogsLocation: DefaultLogsLocation,
+		LogFilePrefix: "dev",
+		ConsoleOutput: STDERR,
+		buildCore: coreBuilder,
+		buildTeeCore: teeCoreBuilder}
 }
 
 func NewRelSysLogConfigDefault() *SysLogConfig  {

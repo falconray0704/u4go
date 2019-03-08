@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/falconray0704/u4go/sysCfg"
 	slog "github.com/falconray0704/u4go/sysLogger"
+	"log"
 	"os"
 )
 
@@ -198,7 +200,17 @@ func main() {
 	*/
 	//demoGetCommandLineArgs(sysCfg)
 
-	_, _, err := slog.Init(true)
+	var (
+		errOnce error
+	)
+
+	sysLoggerCfg := slog.NewSysLogCfg()
+	errOnce = sysCfg.LoadFileCfgs("./sysDatas/cfgs/appCfgs.yaml", "sysLogger", &sysLoggerCfg)
+	if errOnce != nil {
+		log.Fatalf("Loading system configs fail:%s\n", errOnce.Error())
+	}
+
+	_, _, err := sysLoggerCfg.Init()
 	if err != nil {
 		fmt.Printf("Init system logger fail: %s.\n", err.Error())
 		os.Exit(1)

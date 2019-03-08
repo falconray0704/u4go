@@ -2,6 +2,7 @@ package sysCfg
 
 import (
 	"github.com/falconray0704/u4go"
+	slogger "github.com/falconray0704/u4go/sysLogger"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -14,7 +15,8 @@ type loggerCfg struct {
 func TestLoadFileCfgs(t *testing.T) {
 	var (
 		errOnce error
-		cfg loggerCfg
+		//cfg loggerCfg
+		cfg slogger.SysLogConfig
 
 	)
 
@@ -22,7 +24,13 @@ func TestLoadFileCfgs(t *testing.T) {
 
 sysLogger:
   isDevMode: true
+  logLevel: "debug"
+  enableConsole: true
+  enableConsoleFile: true
+  enableJsonFile: true
   logsLocation: "./testDatas"
+  logFilePrefix: "dev"
+  consoleOutput: "stderr"
 
 dbs_infos:
   mysql:
