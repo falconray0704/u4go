@@ -26,6 +26,7 @@ dependencies:
 	go get -u go.uber.org/zap
 	go get -u github.com/stretchr/testify/assert
 	go get -u gopkg.in/yaml.v2
+	go get -u go.uber.org/config
 
 .PHONY: env
 env:
