@@ -1,6 +1,7 @@
 
 PKGS ?= github.com/falconray0704/u4go \
 		github.com/falconray0704/u4go/sysLogger \
+		github.com/falconray0704/u4go/sysCfg \
 		github.com/falconray0704/u4go/app/cfg \
 		github.com/falconray0704/u4go/internal/ioutils
 
@@ -31,6 +32,7 @@ env:
 	rm -rf ./logDatas
 	mkdir -p ./logDatas
 	mkdir -p ./sysLogger/logDatas
+	mkdir -p ./sysCfg/testDatas
 	mkdir -p ./tmp
 	mkdir -p ./app/cfg/tmp
 #	echo "" > ./logDatas/log.root
@@ -64,6 +66,7 @@ clean:
 	rm -rf ./app/cfg/tmp
 	rm -rf ./logDatas
 	rm -rf ./sysLogger/logDatas
+	rm -rf ./sysCfg/testDatas
 	rm -rf ./cover.out
 	rm -rf ./cover.html
 	go clean -cache $(PKGS)
