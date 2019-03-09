@@ -2,21 +2,30 @@ package sysCfg
 
 import (
 	"github.com/falconray0704/u4go"
-	slogger "github.com/falconray0704/u4go/sysLogger"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
+type TestConfig struct {
+}
+
 type loggerCfg struct {
-	IsDevMode bool	`yaml:"isDevMode"`
-	LogsLocation string `yaml:"logsLocation"`
+	IsDevMode bool 			`yaml:"isDevMode"`
+	LogLevel string			`yaml:"logLevel"`
+
+	EnableConsole bool		`yaml:"enableConsole"`
+	EnableConsoleFile bool	`yaml:"enableConsoleFile"`
+	EnalbeJsonFile bool		`yaml:"enableJsonFile"`
+
+	LogsLocation string		`yaml:"logsLocation"` // logs storage location , must end with "\" or "/" which depend on OS
+	LogFilePrefix string 	`yaml:"logFilePrefix"` // prefix of log files
+	ConsoleOutput string	`yaml:"consoleOutput"` // only support "stdout" or "stderr"
 }
 
 func TestLoadFileCfgs(t *testing.T) {
 	var (
 		errOnce error
-		//cfg loggerCfg
-		cfg slogger.SysLogConfig
+		cfg loggerCfg
 
 	)
 

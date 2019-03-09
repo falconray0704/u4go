@@ -2,6 +2,8 @@ package sysLogger
 
 import (
 	"errors"
+	"github.com/falconray0704/u4go"
+	"github.com/falconray0704/u4go/sysCfg"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -9,14 +11,94 @@ import (
 	"testing"
 )
 
+func loadTestingCfg() (cfg *SysLogConfig, clean func(), err error) {
+
+	var (
+		cfgTmp = SysLogConfig{buildCore:coreBuilder, buildTeeCore:teeCoreBuilder}
+		cleanFunc func()
+		errOnce error
+		cfgPath string
+	)
+
+	contents := []byte(`
+
+sysLogger:
+  isDevMode: true
+  logLevel: "debug"
+  enableConsole: true
+  enableConsoleFile: true
+  enableJsonFile: true
+  logsLocation: "./logDatas/"
+  logFilePrefix: "dev"
+  consoleOutput: "stderr"
+
+dbs_infos:
+  mysql:
+    user_name: admin
+    password: root
+    url:	mysql.doryhub.com
+    port:	2000
+  redis:
+    user_name: admin
+    password: root
+    url:	redis.doryhub.com
+    port:	3000
+
+
+`)
+
+	cfgPath, cleanFunc, errOnce = u4go.TempFile("./logDatas/", "appCfgs", contents)
+	if errOnce != nil {
+		return nil, nil, errOnce
+	}
+	defer cleanFunc()
+
+	if errOnce = sysCfg.LoadFileCfgs(cfgPath, "sysLogger", &cfgTmp); errOnce != nil {
+		return nil, nil, errOnce
+	}
+
+	return &cfgTmp, cleanFunc, err
+}
+
+func TestInitStubBuildTeeCoreError(t *testing.T) {
+	var (
+		err error
+		cfg *SysLogConfig
+		clean func()
+	)
+
+	var (
+		st *StubbedTeeCoreBuilderError
+	)
+	cfg, clean,  err = loadTestingCfg()
+	assert.NotNil(t, cfg, "Loading testing sysLogger cfg expect non-nil config.")
+	assert.NotNil(t, clean, "Loading testing sysLogger cfg expect non-nil clean.")
+	assert.Nil(t, err, "Loading testing sysLogger cfg expect nil err.")
+	defer clean()
+	st = WithStubTeeCoreBuilderError(Init, cfg)
+	assert.Nil(t, st.retLogger, "WithStubbedTeeCoreBuilderError expect nil logger.")
+	assert.Nil(t, st.retClose, "WithStubbedTeeCoreBuilderError expect nil close()")
+	assert.NotNil(t, st.retErr, "WithStubbedTeeCoreBuilderError expect non-nil error")
+
+}
+
 func TestInit(t *testing.T) {
 	var (
 		err error
 		logger *zap.Logger
-		closeDev, closeRel func() error
+		close func() error
+
+		cfg *SysLogConfig
+		clean func()
 	)
 
-	logger, closeDev, err = Init(true)
+	cfg, clean,  err = loadTestingCfg()
+	assert.NotNil(t, cfg, "Loading testing sysLogger cfg expect non-nil config.")
+	assert.NotNil(t, clean, "Loading testing sysLogger cfg expect non-nil clean.")
+	assert.Nil(t, err, "Loading testing sysLogger cfg expect nil err.")
+	defer clean()
+
+	logger, close, err = Init(cfg)
 	assert.Nil(t, err, "Init dev mode logger expert nil error")
 	assert.NotNil(t, logger, "Init dev mode expert non-nil logger")
 	Debug("constructed a logger")
@@ -24,29 +106,9 @@ func TestInit(t *testing.T) {
 	Warn("constructed a logger")
 	Error("constructed a logger")
 	Sync()
-	closeDev()
-
-	logger, closeRel, err = Init(false)
-	assert.Nil(t, err, "Init rel mode logger expert nil error")
-	assert.NotNil(t, logger, "Init rel mode expert non-nil logger")
-	Debug("constructed a logger")
-	Info("constructed a logger")
-	Warn("constructed a logger")
-	Error("constructed a logger")
-	Sync()
-	closeRel()
-
-	var (
-		st *StubbedTeeCoreBuilderError
-	)
-	st = WithStubTeeCoreBuilderError(Init, true)
-	assert.Nil(t, st.retLogger, "WithStubbedTeeCoreBuilderError expect nil logger.")
-	assert.Nil(t, st.retClose, "WithStubbedTeeCoreBuilderError expect nil close()")
-	assert.NotNil(t, st.retErr, "WithStubbedTeeCoreBuilderError expect non-nil error")
+	close()
 
 }
-
-
 
 type StubbedTeeCoreBuilderError struct {
 	retLogger *zap.Logger
@@ -56,21 +118,21 @@ type StubbedTeeCoreBuilderError struct {
 	pre		TeeCoreBuilder
 }
 
-func WithStubTeeCoreBuilderError(init InitFunc, isDevMode bool) *StubbedTeeCoreBuilderError {
-	st := StubTeeCoreBuilderError()
-	defer st.UnstubTeeCoreBuilderError()
-	st.retLogger, st.retClose, st.retErr = init(isDevMode)
+func WithStubTeeCoreBuilderError(init InitFunc, cfg *SysLogConfig) *StubbedTeeCoreBuilderError {
+	st := StubTeeCoreBuilderError(cfg)
+	defer st.UnstubTeeCoreBuilderError(cfg)
+	st.retLogger, st.retClose, st.retErr = init(cfg)
 	return st
 }
 
-func StubTeeCoreBuilderError() *StubbedTeeCoreBuilderError {
-	s := &StubbedTeeCoreBuilderError{pre:teeCoreBuilder}
-	teeCoreBuilder = s.teeCoreBuilder
+func StubTeeCoreBuilderError(cfg *SysLogConfig) *StubbedTeeCoreBuilderError {
+	s := &StubbedTeeCoreBuilderError{pre:cfg.buildTeeCore}
+	cfg.buildTeeCore = s.teeCoreBuilder
 	return s
 }
 
-func (st *StubbedTeeCoreBuilderError) UnstubTeeCoreBuilderError() {
-	teeCoreBuilder = st.pre
+func (st *StubbedTeeCoreBuilderError) UnstubTeeCoreBuilderError(cfg *SysLogConfig) {
+	 cfg.buildTeeCore = st.pre
 }
 
 func (st *StubbedTeeCoreBuilderError) teeCoreBuilder(cfg *SysLogConfig) (zap.AtomicLevel, zapcore.Core, func(), error) {
@@ -268,8 +330,13 @@ func TestGetCurrentLevel(t *testing.T) {
 		logger *zap.Logger
 		close func() error
 		err error
+
+		cfgDev, cfgRel *SysLogConfig
 	)
-	logger, close, err = Init(true)
+
+	cfgDev = NewDevSysLogConfigDefault()
+	assert.NotNil(t, cfgDev, "Get default dev SysLogConfig expect always success")
+	logger, close, err = Init(cfgDev)
 	assert.NotNil(t, logger, "Init devMode logger expect non-nil logger.")
 	assert.NotNil(t, close, "Init devMode logger expect non-nil close().")
 	assert.Nil(t, err, "Init devMode logger expect nil error.")
@@ -277,7 +344,9 @@ func TestGetCurrentLevel(t *testing.T) {
 	Sync()
 	Close()
 
-	logger, close, err = Init(false)
+	cfgRel = NewRelSysLogConfigDefault()
+	assert.NotNil(t, cfgDev, "Get default Rel SysLogConfig expect always success")
+	logger, close, err = Init(cfgRel)
 	assert.NotNil(t, logger, "Init relMode logger expect non-nil logger.")
 	assert.NotNil(t, close, "Init relMode logger expect non-nil close().")
 	assert.Nil(t, err, "Init relMode logger expect nil error.")
@@ -292,8 +361,13 @@ func TestSetCurrentLevel(t *testing.T) {
 		logger *zap.Logger
 		close func() error
 		err error
+
+		cfgDev, cfgRel *SysLogConfig
 	)
-	logger, close, err = Init(true)
+
+	cfgDev = NewDevSysLogConfigDefault()
+	assert.NotNil(t, cfgDev, "Get default dev SysLogConfig expect always success")
+	logger, close, err = Init(cfgDev)
 	assert.NotNil(t, logger, "Init devMode logger expect non-nil logger.")
 	assert.NotNil(t, close, "Init devMode logger expect non-nil close().")
 	assert.Nil(t, err, "Init devMode logger expect nil error.")
@@ -302,7 +376,9 @@ func TestSetCurrentLevel(t *testing.T) {
 	Sync()
 	Close()
 
-	logger, close, err = Init(false)
+	cfgRel = NewRelSysLogConfigDefault()
+	assert.NotNil(t, cfgDev, "Get default Rel SysLogConfig expect always success")
+	logger, close, err = Init(cfgRel)
 	assert.NotNil(t, logger, "Init relMode logger expect non-nil logger.")
 	assert.NotNil(t, close, "Init relMode logger expect non-nil close().")
 	assert.Nil(t, err, "Init relMode logger expect nil error.")

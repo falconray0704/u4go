@@ -16,7 +16,7 @@ const (
 	DefaultLogsLocation = "./logDatas/"
 )
 
-type InitFunc func(isDevMode bool) (logger *zap.Logger, closeLogger func() error, err error)
+type InitFunc func(cfg *SysLogConfig) (logger *zap.Logger, closeLogger func() error, err error)
 type LogFieldsFunc func(msg string, fields ...zap.Field)
 type TeeCoreBuilder func(cfg *SysLogConfig) (zap.AtomicLevel, zapcore.Core, func(), error)
 type CoreBuilder func(isDevMode, isJsonEncoder bool, logLevel zap.AtomicLevel, logFilePath string) (zapcore.Core, func(), error)
@@ -64,50 +64,7 @@ type SysLogger struct {
 	//Closer func()
 }
 
-func Init(isDevMode bool) (logger *zap.Logger, closeLogger func() error, err error) {
-	var (
-		sysLogCfg *SysLogConfig
-		sysLogLevel zap.AtomicLevel
-		sysLogTeeCore zapcore.Core
-		sysLogCloser func()
-
-		errOnce error
-	)
-
-	if !isDevMode {
-		sysLogCfg = NewRelSysLogConfigDefault()
-	} else {
-		sysLogCfg = NewDevSysLogConfigDefault()
-	}
-
-	if sysLogLevel, sysLogTeeCore, sysLogCloser, errOnce = sysLogCfg.buildTeeCore(sysLogCfg); errOnce != nil  {
-		return nil, nil, errOnce
-	}
-
-	sysLogger.SysLogCfg = sysLogCfg
-	sysLogger.CurrentLogLevel = sysLogLevel
-	sysLogger.ZapLogger = zap.New(sysLogTeeCore)
-
-	Log = sysLogger.ZapLogger
-
-	Debug = sysLogger.ZapLogger.Debug
-	Info = sysLogger.ZapLogger.Info
-	Warn = sysLogger.ZapLogger.Warn
-	Error = sysLogger.ZapLogger.Error
-	DPanic = sysLogger.ZapLogger.DPanic
-	Panic = sysLogger.ZapLogger.Panic
-	Fatal = sysLogger.ZapLogger.Fatal
-	Sync = sysLogger.ZapLogger.Sync
-
-	Close = func() error {
-		sysLogCloser()
-		return nil
-	}
-
-	return Log, Close, nil
-}
-
-func (cfg *SysLogConfig) Init() (logger *zap.Logger, closeLogger func() error, err error) {
+func Init(cfg *SysLogConfig) (logger *zap.Logger, closeLogger func() error, err error) {
 	var (
 		//sysLogCfg *SysLogConfig
 		sysLogLevel zap.AtomicLevel

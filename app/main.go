@@ -210,7 +210,7 @@ func main() {
 		log.Fatalf("Loading system configs fail:%s\n", errOnce.Error())
 	}
 
-	_, _, err := sysLoggerCfg.Init()
+	_, _, err := slog.Init(sysLoggerCfg)
 	if err != nil {
 		fmt.Printf("Init system logger fail: %s.\n", err.Error())
 		os.Exit(1)
@@ -226,3 +226,4 @@ func main() {
 	slog.Error("constructed a logger")
 
 }
+
