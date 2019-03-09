@@ -61,8 +61,24 @@ dbs_infos:
 	assert.NotNil(t, clean, "Create testing data file expect non nil clean().")
 	assert.NotEqual(t, "", cfgPath, "Create testing data file expect non empty file path.")
 	defer clean()
-
 	errOnce = LoadFileCfgs(cfgPath, "sysLogger", &cfg)
 	assert.NoError(t, errOnce, "Load configs from test file expect no error.")
+
+	contents = []byte(`
+sysLogger:
+  isDevMode: true
+  logLevel: "debug"
+  nonExistField: true
+`)
+	cfgPath, clean, err = u4go.TempFile("./testDatas/", "appCfgs", contents)
+	assert.NoError(t, err, "Create testing data expect always success.")
+	assert.NotNil(t, clean, "Create testing data file expect non nil clean().")
+	assert.NotEqual(t, "", cfgPath, "Create testing data file expect non empty file path.")
+	defer clean()
+	errOnce = LoadFileCfgs(cfgPath, "sysLogger", &cfg)
+	assert.Error(t, errOnce, "Populate non exist field into target expect error.")
+
+	errOnce = LoadFileCfgs("", "sysLogger", &cfg)
+	assert.Error(t, errOnce, "Loading configs from non-exist config file expect error.")
 
 }
