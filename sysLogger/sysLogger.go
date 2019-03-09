@@ -119,14 +119,6 @@ type SysLogConfig struct {
 
 func NewSysLogCfg() *SysLogConfig  {
 	return &SysLogConfig{
-		IsDevMode: true,
-		LogLevel: "info",
-		EnableConsole: true,
-		EnableConsoleFile: true,
-		EnalbeJsonFile: false,
-		LogsLocation: DefaultLogsLocation,
-		LogFilePrefix: "dev",
-		ConsoleOutput: STDERR,
 		buildCore: coreBuilder,
 		buildTeeCore: teeCoreBuilder}
 }

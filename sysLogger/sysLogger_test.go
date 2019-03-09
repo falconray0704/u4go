@@ -14,7 +14,7 @@ import (
 func loadTestingCfg() (cfg *SysLogConfig, clean func(), err error) {
 
 	var (
-		cfgTmp = SysLogConfig{buildCore:coreBuilder, buildTeeCore:teeCoreBuilder}
+		cfgTmp = NewSysLogCfg()
 		cleanFunc func()
 		errOnce error
 		cfgPath string
@@ -53,11 +53,11 @@ dbs_infos:
 	}
 	defer cleanFunc()
 
-	if errOnce = sysCfg.LoadFileCfgs(cfgPath, "sysLogger", &cfgTmp); errOnce != nil {
+	if errOnce = sysCfg.LoadFileCfgs(cfgPath, "sysLogger", cfgTmp); errOnce != nil {
 		return nil, nil, errOnce
 	}
 
-	return &cfgTmp, cleanFunc, err
+	return cfgTmp, cleanFunc, err
 }
 
 func TestInitStubBuildTeeCoreError(t *testing.T) {
