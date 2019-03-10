@@ -44,7 +44,7 @@ run_native_cmd_test_func()
 
 run_docker_func()
 {
-    docker run --rm -v $(pwd)/logDatas:/myApp/logDatas myapp:falcon
+    docker run --rm --dns=192.168.11.1 -v $(pwd)/logDatas:/myApp/logDatas myapp:falcon
 }
 
 run_clean_docker_datas_func()
